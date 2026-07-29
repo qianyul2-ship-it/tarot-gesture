@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Tarot · Sakura AI 塔罗</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,500;1,500&family=Noto+Serif+SC:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#070610;          /* 近黑·微靛 */
+    --bg2:#0c0a16;
+    --card:#120f1f;
+    --card2:#191427;
+    --gold:#e0b73a;        /* 真金属金(主强调) */
+    --gold-bright:#ffe690;
+    --gold-dim:#9a7d2e;
+    --ember:#7d2b3a;       /* 暗酒红(极少量) */
+    --ink:#cfc8db;
+    --ink-dim:#857d96;
+    --line:rgba(224,183,58,.22);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%}
+  body{
+    font-family:"Noto Serif SC",-apple-system,"PingFang SC",serif;
+    background:var(--bg);color:var(--ink);min-height:100vh;overflow-x:hidden;position:relative;
+  }
+  /* 背景层: 星 + 深紫烟雾 + 暗角 + 噪点 */
+  #stars{position:fixed;inset:0;z-index:0}
+  .fog{position:fixed;inset:-25%;z-index:1;pointer-events:none;filter:blur(90px);opacity:.42;
+    background:
+      radial-gradient(45% 40% at 50% 42%, #2a1d4a 0%, transparent 62%),
+      radial-gradient(34% 30% at 22% 78%, #1a1330 0%, transparent 60%),
+      radial-gradient(30% 26% at 80% 20%, #221634 0%, transparent 60%);
+    background-size:180% 180%;animation:fog 75s ease-in-out infinite}
+  @keyframes fog{0%{background-position:0% 0%}50%{background-position:100% 100%}100%{background-position:0% 0%}}
+  .vignette{position:fixed;inset:0;z-index:1;pointer-events:none;
+    background:radial-gradient(120% 100% at 50% 40%, transparent 42%, rgba(0,0,0,.55) 88%, rgba(0,0,0,.85) 100%)}
+  .grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.05;mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+  .wrap{position:relative;z-index:3;display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:30px 16px 36px}
+
+  header{text-align:center;margin-bottom:2px}
+  .orn{color:var(--gold-dim);letter-spacing:.5em;font-size:12px;opacity:.7}
+  header .en{font-family:"Cinzel",serif;font-weight:600;font-size:clamp(1.5rem,0.7rem+3.5vw,3rem);
+    letter-spacing:.18em;white-space:nowrap;margin:6px 0 0;
+    background:linear-gradient(180deg,var(--gold-bright),var(--gold) 55%,var(--gold-dim));
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+    filter:drop-shadow(0 1px 10px rgba(224,183,58,.25))}
+  header .cn{font-family:"Cormorant Garamond",serif;font-style:italic;color:var(--ink-dim);
+    font-size:14px;letter-spacing:.3em;margin-top:6px}
+  header .sub{font-size:12px;color:var(--ink-dim);margin-top:12px;letter-spacing:1.5px;opacity:.85}
+
+  /* ===== 横向 3D 转盘 ===== */
+  .stage{position:relative;width:100%;max-width:860px;height:min(58vh,440px);margin:14px auto 0}
+  .scene{position:absolute;inset:0;perspective:1300px;perspective-origin:50% 46%;transition:opacity .6s,filter .6s}
+  .scene.dim{opacity:.12;filter:blur(3px)}
+  .glow-core{position:absolute;left:50%;top:46%;width:240px;height:240px;transform:translate(-50%,-50%);
+    border-radius:50%;pointer-events:none;
+    background:radial-gradient(circle, rgba(224,183,58,.16), rgba(125,43,58,.10) 45%, transparent 70%);
+    animation:breathe 6s ease-in-out infinite;z-index:0}
+  @keyframes breathe{0%,100%{opacity:.6;transform:translate(-50%,-50%) scale(1)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.12)}}
+  .carousel{position:absolute;left:50%;top:46%;width:0;height:0;transform-style:preserve-3d}
+
+  .cback{position:absolute;width:136px;height:218px;left:-68px;top:-109px;border-radius:12px;
+    backface-visibility:hidden;-webkit-backface-visibility:hidden;cursor:pointer;
+    background:
+      linear-gradient(150deg,#171127,#0f0b1c);
+    border:1px solid var(--line);
+    box-shadow:0 14px 34px rgba(0,0,0,.6), inset 0 0 0 4px rgba(0,0,0,.4), inset 0 0 0 5px rgba(224,183,58,.18);
+    display:flex;align-items:center;justify-content:center}
+  .cback::before{content:"";position:absolute;inset:9px;border:1px solid rgba(224,183,58,.3);border-radius:7px}
+  .cback .sig{font-size:37px;color:var(--gold);filter:drop-shadow(0 0 8px rgba(224,183,58,.5));font-family:"Cinzel",serif}
+  .cback .corner{position:absolute;width:11px;height:11px;border:1px solid var(--gold);opacity:.55}
+  .cback .corner.tl{top:5px;left:5px;border-right:0;border-bottom:0}
+  .cback .corner.tr{top:5px;right:5px;border-left:0;border-bottom:0}
+  .cback .corner.bl{bottom:5px;left:5px;border-right:0;border-top:0}
+  .cback .corner.br{bottom:5px;right:5px;border-left:0;border-top:0}
+  .cback.front{box-shadow:0 14px 40px rgba(0,0,0,.6), inset 0 0 0 4px rgba(0,0,0,.4), inset 0 0 0 5px var(--gold), 0 0 30px rgba(224,183,58,.5)}
+  .cback.front .sig{color:var(--gold-bright);filter:drop-shadow(0 0 14px var(--gold))}
+  .cback.front::before{border-color:var(--gold)}
+
+  /* 抓取标记 + 神秘符文环 */
+  .grab-marker{position:absolute;left:50%;top:5%;transform:translateX(-50%);z-index:7;color:var(--gold);
+    font-size:20px;opacity:.65;filter:drop-shadow(0 0 8px var(--gold));pointer-events:none;animation:bob 2s ease-in-out infinite}
+  @keyframes bob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(6px)}}
+  .rune-ring{position:absolute;left:50%;top:46%;width:min(80vw,580px);height:min(80vw,580px);transform:translate(-50%,-50%);
+    border:1px solid rgba(224,183,58,.10);border-radius:50%;z-index:0;pointer-events:none;animation:spinslow 150s linear infinite}
+  .rune-ring::after{content:"";position:absolute;inset:8%;border:1px dashed rgba(224,183,58,.07);border-radius:50%}
+  .rune-ring span{position:absolute;left:50%;top:50%;font-size:15px;color:rgba(224,183,58,.30);font-family:"Cinzel",serif}
+  @keyframes spinslow{to{transform:translate(-50%,-50%) rotate(360deg)}}
+
+  /* 揭晓层(平面) */
+  .reveal{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:clamp(12px,3vw,28px);
+    z-index:6;pointer-events:none;perspective:1400px}
+  .rc{width:clamp(128px,30vw,176px);aspect-ratio:130/210;transform-style:preserve-3d;
+    opacity:0;transform:translateY(20px) scale(.7);transition:opacity .5s,transform .6s cubic-bezier(.2,.8,.2,1)}
+  .rc.in{opacity:1;transform:none}
+  .rc .inner{position:relative;width:100%;height:100%;transition:transform .85s cubic-bezier(.2,.8,.2,1);transform-style:preserve-3d}
+  .rc.flip .inner{transform:rotateY(180deg)}
+  .rc .face{position:absolute;inset:0;border-radius:13px;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}
+  .rc .bk{background:linear-gradient(150deg,#171127,#0f0b1c);border:1px solid var(--line);
+    box-shadow:0 16px 40px rgba(0,0,0,.7),inset 0 0 0 4px rgba(0,0,0,.4),inset 0 0 0 5px rgba(224,183,58,.18)}
+  .rc .bk .sig{font-size:40px;color:var(--gold);font-family:"Cinzel",serif;filter:drop-shadow(0 0 8px rgba(224,183,58,.4))}
+  .rc .ft{transform:rotateY(180deg);padding:10px;
+    background:linear-gradient(165deg,var(--card2),var(--card));border:1px solid var(--line);
+    box-shadow:0 16px 40px rgba(0,0,0,.7),inset 0 0 30px rgba(224,183,58,.06)}
+  .ft .pos{position:absolute;top:8px;font-size:10px;letter-spacing:2px}
+  .ft .art{font-size:clamp(42px,11vw,58px);margin-top:8px;filter:drop-shadow(0 0 10px rgba(224,183,58,.3))}
+  .ft .art.rev{transform:rotate(180deg)}
+  .ft .nm{font-family:"Cinzel",serif;font-size:clamp(14px,3.4vw,17px);margin-top:8px;letter-spacing:1px;color:var(--gold-bright)}
+  .ft .cnm{font-size:12px;color:var(--ink-dim);margin-top:2px;letter-spacing:2px}
+  .badge-up{color:var(--gold)} .badge-rev{color:#c98aa0}
+
+  .stage-hint{position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);font-family:"Cormorant Garamond",serif;
+    font-style:italic;font-size:15px;color:var(--ink-dim);letter-spacing:1px;white-space:nowrap;text-align:center}
+
+  /* ===== 解读 ===== */
+  .reading{width:min(94vw,720px);margin:22px auto 0;display:none}
+  .reading.show{display:block;animation:fadeup .7s both}
+  @keyframes fadeup{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+  .reading .row{display:flex;gap:15px;padding:17px 18px;border-radius:14px;margin-bottom:12px;
+    background:linear-gradient(160deg,rgba(25,20,39,.7),rgba(18,15,31,.7));border:1px solid var(--line);
+    backdrop-filter:blur(10px);box-shadow:0 10px 30px rgba(0,0,0,.4)}
+  .reading .ic{font-size:36px;flex:0 0 auto;filter:drop-shadow(0 0 8px rgba(224,183,58,.3))}
+  .reading .ic.rev{transform:rotate(180deg)}
+  .reading .slot{font-family:"Cinzel",serif;font-size:11px;letter-spacing:2px;color:var(--gold);margin-bottom:4px}
+  .reading .title{font-size:18px;font-weight:600;color:var(--ink)}
+  .reading .title small{font-family:"Cinzel",serif;font-size:11px;color:var(--ink-dim);margin-left:8px;font-weight:400}
+  .reading .pos-tag{font-size:11px;padding:1px 9px;border-radius:20px;border:1px solid currentColor;margin-left:8px}
+  .reading .mean{font-size:13.5px;line-height:1.85;color:#bcb4cc;margin-top:8px}
+
+  .actions{display:flex;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap}
+  .pill{display:inline-flex;align-items:center;gap:8px;padding:12px 30px;border-radius:2px;cursor:pointer;
+    font-family:"Cinzel",serif;font-size:13px;letter-spacing:2px;color:var(--gold-bright);
+    background:linear-gradient(180deg,rgba(40,32,20,.6),rgba(20,16,12,.6));
+    border:1px solid var(--gold-dim);box-shadow:0 0 18px rgba(224,183,58,.12),inset 0 0 16px rgba(224,183,58,.06);
+    transition:transform .2s,box-shadow .2s,border-color .2s}
+  .pill:hover{transform:translateY(-2px);border-color:var(--gold);box-shadow:0 0 28px rgba(224,183,58,.28)}
+  .pill.ghost{color:var(--ink-dim);border-color:rgba(255,255,255,.12);background:rgba(255,255,255,.02);box-shadow:none}
+  .pill:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+  /* ===== 摄像头浮窗 ===== */
+  .cam{position:fixed;right:16px;bottom:16px;width:206px;z-index:20;
+    background:rgba(12,10,22,.9);border:1px solid var(--line);border-radius:12px;padding:10px;
+    backdrop-filter:blur(14px);box-shadow:0 12px 40px rgba(0,0,0,.7);transition:transform .35s}
+  .cam.collapsed{transform:translateY(calc(100% - 40px))}
+  .cam .hd{display:flex;align-items:center;justify-content:space-between;font-family:"Cinzel",serif;font-size:11px;
+    color:var(--gold);letter-spacing:1px;margin-bottom:8px;cursor:pointer}
+  .cam .hd .dot{width:7px;height:7px;border-radius:50%;background:#555;display:inline-block;margin-right:6px}
+  .cam .hd .dot.on{background:var(--gold);box-shadow:0 0 8px var(--gold)}
+  .cam-box{position:relative;border-radius:9px;overflow:hidden;background:#000;aspect-ratio:4/3}
+  #cam{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:block}
+  #overlay{position:absolute;inset:0;width:100%;height:100%;transform:scaleX(-1)}
+  .gnow{position:absolute;right:6px;bottom:6px;background:rgba(0,0,0,.55);border-radius:7px;padding:3px 8px;font-size:11px;color:var(--gold)}
+  .charge{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);width:72%;height:5px;
+    background:rgba(255,255,255,.12);border-radius:5px;overflow:hidden;opacity:0;transition:.15s}
+  .charge.show{opacity:1}
+  .charge i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold-dim),var(--gold-bright))}
+  .cam .modes{display:flex;gap:6px;margin-top:8px}
+  .cam .seg{flex:1;text-align:center;font-size:11px;padding:6px 0;border-radius:6px;cursor:pointer;
+    color:var(--ink-dim);border:1px solid rgba(255,255,255,.08)}
+  .cam .seg.active{color:var(--gold);border-color:var(--gold-dim);background:rgba(224,183,58,.1)}
+  .cam .btns{margin-top:8px}
+  .cam .btns button{width:100%;font-family:"Cinzel",serif;font-size:11px;letter-spacing:1px;padding:8px 0;border-radius:6px;cursor:pointer;
+    border:1px solid var(--gold-dim);background:rgba(40,32,20,.5);color:var(--gold-bright)}
+  .cam .btns button:hover{background:rgba(60,48,28,.6)}
+
+  .toast{position:fixed;left:50%;top:22px;transform:translateX(-50%);z-index:50;
+    background:rgba(12,10,22,.95);border:1px solid var(--gold-dim);color:var(--gold-bright);
+    font-family:"Cinzel",serif;padding:10px 24px;border-radius:2px;font-size:13px;letter-spacing:2px;
+    opacity:0;pointer-events:none;transition:.3s}
+  .toast.show{opacity:1}
+
+  footer{position:relative;z-index:3;text-align:center;color:var(--ink-dim);font-size:11px;margin-top:auto;padding-top:26px;line-height:1.9;opacity:.75}
+
+  /* 右上角牌阵选择器(默认半隐形, 悬停/点击展开) */
+  .spreads{position:fixed;top:14px;right:14px;z-index:21;width:auto;max-width:54px;
+    background:rgba(12,10,22,.30);border:1px solid rgba(224,183,58,.10);border-radius:10px;padding:8px 11px;
+    backdrop-filter:blur(7px);box-shadow:none;opacity:.3;overflow:hidden;
+    transition:opacity .35s,max-width .4s,background .35s,box-shadow .35s,border-color .35s}
+  .spreads:hover,.spreads.pinned{opacity:1;max-width:230px;background:rgba(12,10,22,.94);
+    border-color:var(--line);box-shadow:0 12px 40px rgba(0,0,0,.7)}
+  .spreads .sp-hd{font-family:"Cinzel",serif;font-size:10px;letter-spacing:2px;color:var(--gold);white-space:nowrap;cursor:pointer;opacity:.9}
+  .spreads .sp-body{max-height:0;opacity:0;overflow:hidden;transition:max-height .4s,opacity .3s,margin-top .35s}
+  .spreads:hover .sp-body,.spreads.pinned .sp-body{max-height:440px;opacity:1;margin-top:9px}
+  .sp{border:1px solid rgba(255,255,255,.08);border-radius:9px;padding:8px 10px;margin-bottom:7px;cursor:pointer;transition:.2s}
+  .sp:last-child{margin-bottom:0}
+  .sp:hover{border-color:var(--gold-dim)}
+  .sp.active{border-color:var(--gold);background:rgba(224,183,58,.09)}
+  .sp-row{display:flex;align-items:center;gap:8px}
+  .sp-n{font-family:"Cinzel",serif;color:var(--gold);font-size:15px;width:16px;text-align:center}
+  .sp-name{font-size:13px;color:var(--ink)}
+  .sp-name em{font-style:normal;color:var(--gold);font-size:11px;margin-left:5px}
+  .sp-intro{font-size:11px;line-height:1.7;color:var(--ink-dim);max-height:0;overflow:hidden;opacity:0;
+    transition:max-height .35s,margin-top .35s,opacity .3s}
+  .sp.open .sp-intro{max-height:140px;margin-top:7px;opacity:1}
+
+  /* 牌阵槽位条 */
+  .slots{display:flex;justify-content:center;gap:clamp(10px,2.4vw,20px);flex-wrap:wrap;margin-top:0;min-height:0;transition:margin .3s}
+  .slots.show{margin-top:26px}
+  .slot{width:clamp(58px,14vw,82px);aspect-ratio:130/210;border-radius:9px;border:1px dashed rgba(224,183,58,.30);
+    display:flex;align-items:center;justify-content:center;position:relative;background:rgba(255,255,255,.018);transition:.3s}
+  .slot .lbl{position:absolute;top:-19px;font-size:10px;color:var(--ink-dim);letter-spacing:1px;white-space:nowrap}
+  .slot.cur{border-color:var(--gold);border-style:solid;box-shadow:0 0 18px rgba(224,183,58,.32)}
+  .slot.cur .lbl{color:var(--gold)}
+  .slot.filled{border-style:solid;border-color:var(--line);background:linear-gradient(160deg,var(--card2),var(--card))}
+  .slot .mini{display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transform:scale(.6);transition:opacity .35s,transform .35s}
+  .slot .mini.in{opacity:1;transform:scale(1)}
+  .slot .mini .e{font-size:clamp(20px,5vw,28px)}
+  .slot .mini .e.rev{transform:rotate(180deg)}
+  .slot .mini .nn{font-size:9px;color:var(--gold-bright);margin-top:3px;text-align:center;line-height:1.15;letter-spacing:.3px;padding:0 2px}
+
+  /* ===== 主题切换按钮(左上) ===== */
+  .theme-toggle{position:fixed;top:14px;left:14px;z-index:21;cursor:pointer;
+    font-family:"Cinzel",serif;font-size:11px;letter-spacing:1px;padding:8px 15px;border-radius:22px;
+    color:var(--gold-bright);background:rgba(12,10,22,.5);border:1px solid var(--gold-dim);
+    backdrop-filter:blur(8px);box-shadow:0 4px 16px rgba(0,0,0,.4);transition:.25s}
+  .theme-toggle:hover{transform:translateY(-1px);border-color:var(--gold);box-shadow:0 6px 22px rgba(0,0,0,.5)}
+  .sk{display:none}   /* 星之卡装饰: 默认(幽冥)隐藏, 仅小樱皮肤显示 */
+
+  /* ============================================================
+     🌸 百变小樱 皮肤 (data-theme="sakura") — 粉樱浅色 / 星之卡
+     ============================================================ */
+  body[data-theme="sakura"]{
+    --bg:#ffe9f3;        /* 樱粉天 */
+    --bg2:#ffdcec;
+    --card:#fff6fb;
+    --card2:#ffe7f3;
+    --gold:#e85c97;      /* 桃粉(主强调,复用 gold 变量) */
+    --gold-bright:#ff89bf;
+    --gold-dim:#cf6f9e;
+    --ember:#9b7ad6;     /* 薰衣草紫(点缀) */
+    --ink:#5b3550;       /* 深梅墨字 */
+    --ink-dim:#a87f9b;
+    --line:rgba(232,92,151,.28);
+    background:var(--bg);
+  }
+  body[data-theme="sakura"] .fog{opacity:.55;
+    background:
+      radial-gradient(45% 40% at 50% 38%, #ffc2dd 0%, transparent 62%),
+      radial-gradient(34% 30% at 20% 80%, #ffd6ea 0%, transparent 60%),
+      radial-gradient(32% 28% at 82% 22%, #e6d4ff 0%, transparent 60%)}
+  body[data-theme="sakura"] .vignette{
+    background:radial-gradient(120% 100% at 50% 36%, transparent 50%, rgba(255,170,205,.26) 90%, rgba(255,150,195,.4) 100%)}
+  body[data-theme="sakura"] .grain{opacity:.03}
+  body[data-theme="sakura"] .glow-core{
+    background:radial-gradient(circle, rgba(255,140,190,.22), rgba(155,122,214,.12) 45%, transparent 70%)}
+  body[data-theme="sakura"] header .en{filter:drop-shadow(0 1px 10px rgba(255,140,190,.4))}
+  /* 卡背 = 正宗星之卡(粉底层叠 + 描金花框 + 上下金星 + SAKURA) */
+  body[data-theme="sakura"] .cback,
+  body[data-theme="sakura"] .rc .bk{
+    background:radial-gradient(125% 100% at 50% 28%, #ffe6f1 0%, #ffadd0 44%, #f274b0 80%, #df5f9e 100%);
+    border:1px solid #cf9a33;
+    box-shadow:0 14px 32px rgba(210,80,140,.32), inset 0 0 0 3px rgba(255,255,255,.5),
+      inset 0 0 0 4px #d9a23c, inset 0 0 22px rgba(223,95,158,.35)}
+  body[data-theme="sakura"] .cback::before{display:none}
+  body[data-theme="sakura"] .cback .corner{display:none}
+  /* 描金内框 + 金星 + 名牌 (仅小樱皮肤显示) */
+  body[data-theme="sakura"] .sk{display:block}
+  body[data-theme="sakura"] .sk-frame{position:absolute;inset:7px;border-radius:8px;pointer-events:none;
+    border:1.5px solid rgba(224,168,58,.9);
+    box-shadow:inset 0 0 0 2px rgba(255,255,255,.45), inset 0 0 12px rgba(224,168,58,.28)}
+  body[data-theme="sakura"] .sk-star{position:absolute;left:50%;transform:translateX(-50%);color:#ffe39a;font-size:18px;
+    text-shadow:0 0 6px rgba(224,168,58,.9),0 1px 0 #c2912f;filter:drop-shadow(0 0 3px rgba(255,210,120,.8))}
+  body[data-theme="sakura"] .sk-t{top:13px}
+  body[data-theme="sakura"] .sk-b{bottom:27px;font-size:13px}
+  body[data-theme="sakura"] .sk-name{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
+    font-family:"Cinzel",serif;font-size:9px;letter-spacing:3px;color:#fff5dd;text-shadow:0 1px 2px rgba(180,70,120,.65)}
+  body[data-theme="sakura"] .cback .sig,
+  body[data-theme="sakura"] .rc .bk .sig{color:#fff6e2;font-size:29px;filter:drop-shadow(0 0 8px rgba(224,168,58,.9))}
+  body[data-theme="sakura"] .cback.front{
+    box-shadow:0 14px 38px rgba(210,80,140,.45), inset 0 0 0 3px rgba(255,255,255,.6),
+      inset 0 0 0 4px #ffd877, inset 0 0 22px rgba(255,150,200,.4), 0 0 30px rgba(255,200,120,.65)}
+  body[data-theme="sakura"] .cback.front .sk-frame{border-color:#ffe39a;
+    box-shadow:inset 0 0 0 2px rgba(255,255,255,.6), inset 0 0 14px rgba(255,210,120,.45)}
+  body[data-theme="sakura"] .cback.front .sig{color:#fff;filter:drop-shadow(0 0 14px #ffd877)}
+  body[data-theme="sakura"] .rune-ring{border-color:rgba(232,92,151,.16)}
+  body[data-theme="sakura"] .rune-ring::after{border-color:rgba(155,122,214,.14)}
+  body[data-theme="sakura"] .rune-ring span{color:rgba(232,92,151,.4)}
+  /* 揭晓正面 */
+  body[data-theme="sakura"] .rc .ft{
+    background:linear-gradient(165deg,#fff6fb,#ffe7f3);
+    box-shadow:0 16px 36px rgba(214,90,150,.3),inset 0 0 30px rgba(255,140,190,.12)}
+  body[data-theme="sakura"] .ft .art{filter:drop-shadow(0 0 10px rgba(255,140,190,.4))}
+  body[data-theme="sakura"] .badge-rev{color:#b06fc2}
+  /* 解读卡 */
+  body[data-theme="sakura"] .reading .row{
+    background:linear-gradient(160deg,rgba(255,246,251,.85),rgba(255,231,243,.85));
+    box-shadow:0 10px 26px rgba(214,90,150,.18)}
+  body[data-theme="sakura"] .reading .mean{color:#7a5570}
+  body[data-theme="sakura"] .reading .ic{filter:drop-shadow(0 0 8px rgba(255,140,190,.4))}
+  /* 按钮 */
+  body[data-theme="sakura"] .pill{
+    background:linear-gradient(180deg,rgba(255,255,255,.85),rgba(255,224,239,.85));color:#d24d8d;border-color:var(--gold-dim);
+    box-shadow:0 6px 18px rgba(214,90,150,.18),inset 0 0 16px rgba(255,140,190,.12)}
+  body[data-theme="sakura"] .pill:hover{box-shadow:0 8px 26px rgba(214,90,150,.32)}
+  body[data-theme="sakura"] .pill.ghost{color:var(--ink-dim);background:rgba(255,255,255,.55);border-color:rgba(232,92,151,.2);box-shadow:none}
+  /* 浮窗浅色玻璃 */
+  body[data-theme="sakura"] .cam,
+  body[data-theme="sakura"] .spreads.pinned,
+  body[data-theme="sakura"] .spreads:hover{
+    background:rgba(255,246,251,.92);border-color:var(--line);box-shadow:0 12px 36px rgba(214,90,150,.25)}
+  body[data-theme="sakura"] .spreads{background:rgba(255,246,251,.4);border-color:rgba(232,92,151,.16)}
+  body[data-theme="sakura"] .cam .btns button{
+    background:linear-gradient(180deg,rgba(255,255,255,.8),rgba(255,224,239,.8));color:#d24d8d;border-color:var(--gold-dim)}
+  body[data-theme="sakura"] .cam .btns button:hover{background:rgba(255,224,239,.95)}
+  body[data-theme="sakura"] .toast{background:rgba(255,246,251,.96);border-color:var(--gold-dim);color:#d24d8d}
+  body[data-theme="sakura"] .sp{border-color:rgba(232,92,151,.16)}
+  body[data-theme="sakura"] .slot{border-color:rgba(232,92,151,.35)}
+  body[data-theme="sakura"] .slot.cur{box-shadow:0 0 18px rgba(255,140,190,.45)}
+  body[data-theme="sakura"] .theme-toggle{
+    background:rgba(255,246,251,.7);color:#d24d8d;border-color:var(--gold-dim);box-shadow:0 4px 16px rgba(214,90,150,.22)}
+  /* ===== DeepSeek AI 解读 ===== */
+  .question-card,.ai-reading{width:min(94vw,720px);margin:18px auto 0;padding:18px;border-radius:16px;
+    background:linear-gradient(160deg,rgba(25,20,39,.78),rgba(18,15,31,.78));border:1px solid var(--line);
+    backdrop-filter:blur(12px);box-shadow:0 12px 32px rgba(0,0,0,.35)}
+  .question-card label,.ai-title{display:block;font-size:12px;letter-spacing:2px;color:var(--gold);margin-bottom:10px}
+  .question-card textarea{display:block;width:100%;min-height:78px;resize:vertical;padding:12px 14px;border-radius:10px;
+    color:var(--ink);background:rgba(0,0,0,.2);border:1px solid rgba(224,183,58,.2);
+    font:13px/1.8 "Noto Serif SC",-apple-system,"PingFang SC",serif;outline:none}
+  .question-card textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(224,183,58,.08)}
+  .question-meta{display:flex;justify-content:space-between;gap:12px;margin-top:8px;color:var(--ink-dim);font-size:10px}
+  .ai-action{display:none;justify-content:center;margin-top:14px}
+  .ai-action.show{display:flex}
+  .ai-reading{display:none;line-height:1.95;color:var(--ink)}
+  .ai-reading.show{display:block;animation:fadeup .6s both}
+  .ai-reading.loading{opacity:.75}
+  .ai-reading .ai-body{white-space:pre-wrap;font-size:14px}
+  .ai-reading .ai-note{margin-top:13px;padding-top:11px;border-top:1px solid var(--line);font-size:10px;color:var(--ink-dim)}
+  body[data-theme="sakura"] .question-card,
+  body[data-theme="sakura"] .ai-reading{background:rgba(255,246,251,.86);box-shadow:0 12px 32px rgba(214,90,150,.16)}
+  body[data-theme="sakura"] .question-card textarea{background:rgba(255,255,255,.7);border-color:rgba(232,92,151,.22)}
+
+  @media(max-width:480px){
+    .theme-toggle{top:10px;left:10px;padding:7px 12px;font-size:10px}
+    .cam{width:150px} .cback{width:108px;height:174px;left:-54px;top:-87px}
+    .cback .sig{font-size:31px}
+    .stage{height:50vh}
+    .spreads{width:158px;top:10px;right:10px;padding:8px 9px}
+    .sp{padding:6px 8px} .sp-name{font-size:12px}
+  }
+</style>
+</head>
+<body data-theme="sakura">
+<canvas id="stars"></canvas>
+<div class="fog"></div>
+<div class="vignette"></div>
+<div class="grain"></div>
+<div class="toast" id="toast"></div>
+<button class="theme-toggle" id="themeToggle">🌙 幽冥风</button>
+
+<div class="wrap">
+  <header>
+    <div class="orn">✦ ━━━━━ ✦ ━━━━━ ✦</div>
+    <h1 class="en">TAROT</h1>
+    <div class="cn">樱 花 塔 罗 · 倾听此刻的内心</div>
+    <div class="sub">移动手掌左右滚动牌阵 · 握拳收取你选中的卡</div>
+  </header>
+
+  <div class="stage" id="stage">
+    <div class="rune-ring" id="runeRing"></div>
+    <div class="glow-core"></div>
+    <div class="grab-marker">▼</div>
+    <div class="scene" id="scene"><div class="carousel" id="carousel"></div></div>
+    <div class="reveal" id="reveal"></div>
+    <div class="stage-hint" id="stageHint">轻触卡牌 · 或开启摄像头以手势叩问命运</div>
+  </div>
+
+  <div class="slots" id="slots"></div>
+
+  <div class="reading" id="reading"></div>
+
+  <section class="question-card" aria-labelledby="questionLabel">
+    <label id="questionLabel" for="questionInput">✦ 写下你想询问的问题</label>
+    <textarea id="questionInput" maxlength="300" placeholder="例如：我应该如何看待目前的关系？也可以留空，进行开放式自我探索。"></textarea>
+    <div class="question-meta"><span>问题只会在请求 AI 解读时发送</span><span id="questionCount">0 / 300</span></div>
+  </section>
+
+  <div class="actions">
+    <button class="pill" id="drawPill">✦ 叩 问 命 运 ✦</button>
+    <button class="pill ghost" id="shufflePill">洗 牌</button>
+    <button class="pill ghost" id="camPill">🎥 开启手势</button>
+  </div>
+  <div class="ai-action" id="aiAction">
+    <button class="pill" id="aiReadingBtn">✦ DeepSeek AI 深度解读 ✦</button>
+  </div>
+  <section class="ai-reading" id="aiReading" aria-live="polite">
+    <div class="ai-title">✦ AI 心灵解读</div>
+    <div class="ai-body" id="aiReadingBody"></div>
+    <div class="ai-note">AI 解读仅供娱乐与自我反思，不替代医疗、法律、心理或投资等专业建议。</div>
+  </section>
+  <div id="diag" style="text-align:center;font-size:12px;color:var(--ink-dim);margin-top:12px;min-height:16px;letter-spacing:.5px"></div>
+</div>
+
+<aside class="spreads" id="spreads"></aside>
+
+<aside class="cam collapsed" id="camWidget">
+  <div class="hd" id="camHd"><span><span class="dot" id="dot"></span><span id="statusTxt">GESTURE</span></span><span id="camToggle">▲</span></div>
+  <div class="cam-box">
+    <video id="cam" autoplay playsinline muted></video>
+    <canvas id="overlay"></canvas>
+    <div class="gnow" id="gnow">—</div>
+    <div class="charge" id="charge"><i id="chargeBar"></i></div>
+  </div>
+  <div class="btns"><button id="startBtn">开启摄像头</button></div>
+</aside>
+
+<footer>
+  🖐 移动手掌滚动选牌 · ✊ 握拳抓取 · ✌ 切换牌阵　|　MediaPipe 本地识别 · 摄像头画面不上传<br>
+  Tarot · Sakura × DeepSeek AI · 仅供娱乐与自我反思 ✦
+</footer>
+
+<script src="tarot-data.js"></script>
+<script>
+/* ============ 星空 ============ */
+(function(){
+  const c=document.getElementById('stars'), x=c.getContext('2d');
+  let w,h,stars,shoots=[],petals=[];
+  const PCOL=['#ffc1dd','#ffb0d2','#ff9ec7','#ffd6e8','#f8a8cd'];
+  function mkPetal(spread){return{x:Math.random()*w,y:spread?Math.random()*h:-20,
+    r:Math.random()*6+4,rot:Math.random()*Math.PI*2,spin:(Math.random()-.5)*.04,
+    vy:Math.random()*.6+.4,sway:Math.random()*Math.PI*2,swaySp:Math.random()*.02+.01,
+    amp:Math.random()*.7+.3,a:Math.random()*.4+.5,color:PCOL[Math.floor(Math.random()*PCOL.length)]};}
+  function resize(){w=c.width=innerWidth;h=c.height=innerHeight;
+    stars=Array.from({length:Math.min(170,Math.floor(w*h/9000))},()=>({
+      x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.1+.25,
+      a:Math.random(),s:Math.random()*.015+.003,vy:Math.random()*.03+.008}));
+    petals=Array.from({length:Math.min(75,Math.floor(w*h/16000))},()=>mkPetal(true));}
+  function shoot(){if(window.__theme==='sakura')return;shoots.push({x:Math.random()*w,y:-20,len:Math.random()*110+60,sp:Math.random()*4+4});}
+  function drawPetal(p){x.save();x.translate(p.x,p.y);x.rotate(p.rot);x.globalAlpha=p.a;x.fillStyle=p.color;
+    const s=p.r;x.beginPath();x.moveTo(0,0);
+    x.quadraticCurveTo(s*.62,-s*.42,0,-s*1.45);x.quadraticCurveTo(-s*.62,-s*.42,0,0);
+    x.fill();x.restore();}
+  resize(); addEventListener('resize',resize);
+  setInterval(()=>{if(Math.random()<.4)shoot();},3800);
+  (function loop(){
+    x.clearRect(0,0,w,h);
+    if(window.__theme==='sakura'){
+      for(const p of petals){p.sway+=p.swaySp;p.y+=p.vy;p.x+=Math.sin(p.sway)*p.amp;p.rot+=p.spin;
+        if(p.y>h+24){p.y=-20;p.x=Math.random()*w;}
+        if(p.x>w+24)p.x=-20; else if(p.x<-24)p.x=w+24;
+        drawPetal(p);}
+      x.globalAlpha=1; requestAnimationFrame(loop); return;
+    }
+    for(const st of stars){st.a+=st.s; if(st.a>1||st.a<0)st.s*=-1; st.y+=st.vy; if(st.y>h)st.y=0;
+      x.globalAlpha=Math.abs(st.a)*.8; x.fillStyle=Math.random()<.1?'#c2a463':'#e8e3f0';
+      x.beginPath(); x.arc(st.x,st.y,st.r,0,7); x.fill();}
+    x.globalAlpha=1;
+    for(let i=shoots.length-1;i>=0;i--){const s=shoots[i];
+      const g=x.createLinearGradient(s.x,s.y,s.x-s.len,s.y-s.len);
+      g.addColorStop(0,'rgba(224,197,135,.75)'); g.addColorStop(1,'transparent');
+      x.strokeStyle=g; x.lineWidth=1.6; x.beginPath(); x.moveTo(s.x,s.y); x.lineTo(s.x-s.len,s.y-s.len); x.stroke();
+      s.x+=s.sp; s.y+=s.sp; if(s.y>h+50)shoots.splice(i,1);}
+    requestAnimationFrame(loop);
+  })();
+})();
+
+/* ============ 横向 3D 转盘 ============ */
+const stage=document.getElementById('stage');
+const scene=document.getElementById('scene');
+const carousel=document.getElementById('carousel');
+const revealEl=document.getElementById('reveal');
+const readingEl=document.getElementById('reading');
+const stageHint=document.getElementById('stageHint');
+const toastEl=document.getElementById('toast');
+const drawPill=document.getElementById('drawPill');
+const shufflePill=document.getElementById('shufflePill');
+const aiAction=document.getElementById('aiAction');
+const aiReading=document.getElementById('aiReading');
+const aiReadingBody=document.getElementById('aiReadingBody');
+const aiReadingBtn=document.getElementById('aiReadingBtn');
+const questionInput=document.getElementById('questionInput');
+const questionCount=document.getElementById('questionCount');
+
+const N=20, STEP=360/N;          // 20张牌圆柱, 正前显示约7张
+let R=420, spin=0, vel=0;
+const IDLE=0.07, FRICTION=0.974;
+let phase='idle';           // idle | spin | snap | reveal | done
+let snapTarget=0, busy=false;
+let manualMode=false, manualVel=0;        // 手势自主控盘
+let revealed=false, fistLatch=false;      // 揭晓定格 / 握拳防连发
+const SIGILS=['☉','☽','✶','♆','☿','♄','♃','✷','☖','⚸','✴','♇','☌','✦','❋','⚹'];
+
+/* ===== 牌阵玩法(按张数) ===== */
+const SPREADS={
+  1:{n:'①', name:'圣示牌', cnt:1, slots:['指引'],
+     intro:'最简单直接的占卜：心中默念一个问题，抽一张牌，给出此刻的核心指引与态度。适合每日一占、是非决断。'},
+  3:{n:'②', name:'时间之流', cnt:3, slots:['过去','现在','未来'],
+     intro:'经典三牌阵：依次揭示事情的来由、当前处境与未来走向，看清一件事的发展脉络。最常用的入门牌阵。'},
+  5:{n:'③', name:'十字牌阵', cnt:5, slots:['现状','挑战','根源','方向','结果'],
+     intro:'进阶五牌阵：从现状与阻碍切入，挖出根源、指明方向、预示结果，适合较复杂的处境与抉择分析。'},
+};
+let spreadK=1;                            // 当前牌阵张数
+let collected=[], slotEls=[], spreadActive=false;
+
+function toast(m){toastEl.textContent=m;toastEl.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>toastEl.classList.remove('show'),1700);}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+function calcR(){
+  const w=Math.min(stage.clientWidth,860);
+  const cw=w<480?108:136;
+  R=Math.max(330, cw/(2*Math.tan(Math.PI/N))*1.16);
+}
+let backs=[];
+function buildCarousel(){
+  carousel.innerHTML=''; backs=[];
+  calcR();
+  for(let i=0;i<N;i++){
+    const el=document.createElement('div');
+    el.className='cback';
+    el.innerHTML=`<span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span><span class="sk sk-frame"></span><span class="sk sk-star sk-t">✦</span><span class="sk sk-star sk-b">✦</span><span class="sk sk-name">SAKURA</span><span class="sig">${SIGILS[i%SIGILS.length]}</span>`;
+    el.style.transform=`rotateY(${i*STEP}deg) translateZ(${R}px)`;
+    el.addEventListener('click',()=>{if(!busy)doDraw();});
+    carousel.appendChild(el);
+    backs.push(el);
+  }
+}
+function depth(){
+  const span=3.5*STEP;     // 显示中心+左右各3张=7张
+  for(let i=0;i<backs.length;i++){
+    let net=((i*STEP+spin)%360+360)%360; if(net>180)net-=360;
+    const ab=Math.abs(net);
+    backs[i].style.opacity = ab>span?0:(0.22+0.78*(1-ab/(span+10))).toFixed(2);
+    backs[i].style.zIndex = Math.round(300-ab);
+    backs[i].classList.toggle('front', ab<STEP/2 && manualMode);   // 手动模式高亮正前牌
+  }
+}
+function frontIndex(){ return ((Math.round(-spin/STEP))%N+N)%N; }
+
+let onLanded=null;
+function tick(){
+  if(phase==='spin'){
+    spin+=vel; vel*=FRICTION;
+    if(Math.abs(vel)<0.5){ phase='snap'; snapTarget=Math.round(spin/STEP)*STEP; }
+  }else if(phase==='snap'){
+    spin+=(snapTarget-spin)*0.18;
+    if(Math.abs(snapTarget-spin)<0.25){ spin=snapTarget; phase='reveal'; if(onLanded){const f=onLanded;onLanded=null;f();} }
+  }else if(phase==='manual'){
+    spin+=manualVel;                       // 手左右移动 → 实时滚动转盘
+  }else if(phase==='idle'){
+    spin+=IDLE;
+  }
+  carousel.style.transform=`rotateY(${spin}deg)`;
+  depth();
+  requestAnimationFrame(tick);
+}
+
+function pickCards(n){
+  const pool=[...TAROT_DECK], out=[];
+  for(let i=0;i<n;i++){const c=pool.splice(Math.floor(Math.random()*pool.length),1)[0];out.push({...c,reversed:Math.random()<0.42});}
+  return out;
+}
+
+function cardFace(card, slot){
+  const rev=card.reversed, posTxt=rev?'逆位':'正位';
+  return `<div class="inner">
+    <div class="face bk"><span class="sk sk-frame"></span><span class="sk sk-star sk-t">✦</span><span class="sk sk-star sk-b">✦</span><span class="sk sk-name">SAKURA</span><span class="sig">✦</span></div>
+    <div class="face ft">
+      <span class="pos ${rev?'badge-rev':'badge-up'}">${slot?slot+' · ':''}${posTxt}</span>
+      <div class="art ${rev?'rev':''}">${card.emoji}</div>
+      <div class="nm">${card.en}</div>
+      <div class="cnm">${card.name}</div>
+    </div></div>`;
+}
+
+// 单张随机(不与已收集重复)
+function pickOne(){
+  const used=new Set(collected.map(c=>c.id));
+  const pool=TAROT_DECK.filter(c=>!used.has(c.id));
+  const c=pool[Math.floor(Math.random()*pool.length)];
+  return {...c, reversed:Math.random()<0.42};
+}
+function miniCard(card){
+  return `<div class="mini"><span class="e ${card.reversed?'rev':''}">${card.emoji}</span><span class="nn">${card.name}</span></div>`;
+}
+
+// 牌阵开始: 清空收集 + 建好空槽位
+function startSpread(){
+  collected=[]; slotEls=[]; spreadActive=true; revealed=false;
+  const sp=SPREADS[spreadK], box=document.getElementById('slots');
+  box.classList.add('show');
+  box.innerHTML=sp.slots.map((lb,i)=>`<div class="slot${i===0?' cur':''}"><span class="lbl">${lb}</span></div>`).join('');
+  slotEls=[...box.querySelectorAll('.slot')];
+}
+
+// 居中揭晓一张
+async function revealOne(card, slotLabel){
+  scene.classList.add('dim');
+  const el=document.createElement('div'); el.className='rc'; el.innerHTML=cardFace(card, slotLabel);
+  revealEl.appendChild(el);
+  await sleep(40); el.classList.add('in');
+  await sleep(430); el.classList.add('flip');
+  await sleep(950);
+  return el;
+}
+
+// 收起到对应槽位(关键: 选中确认→收进牌阵)
+async function collectToSlot(idx, card, rcEl){
+  const slot=slotEls[idx];
+  slot.classList.remove('cur'); slot.classList.add('filled');
+  slot.insertAdjacentHTML('beforeend', miniCard(card));
+  const mini=slot.querySelector('.mini');
+  if(rcEl){
+    const a=rcEl.getBoundingClientRect(), b=slot.getBoundingClientRect();
+    const dx=(b.left+b.width/2)-(a.left+a.width/2), dy=(b.top+b.height/2)-(a.top+a.height/2);
+    rcEl.style.transition='transform .6s cubic-bezier(.5,0,.7,1),opacity .55s';
+    rcEl.style.transform=`translate(${dx}px,${dy}px) scale(${(b.width/a.width).toFixed(3)})`;
+    rcEl.style.opacity='0';
+    await sleep(520);
+  }
+  mini.classList.add('in');
+  revealEl.innerHTML='';
+  if(idx+1<slotEls.length) slotEls[idx+1].classList.add('cur');   // 高亮下一待抽槽
+  await sleep(260);
+}
+
+// 抽一张(useFront=手势抓正前; 否则随机转), 揭晓后收进槽位
+async function drawOne(useFront){
+  if(useFront){ snapTarget=Math.round(spin/STEP)*STEP; phase='snap'; }
+  else { vel=(15+Math.random()*7)*(Math.random()<.5?1:-1); phase='spin'; }
+  await new Promise(r=>onLanded=r);
+  const card=pickOne(), idx=collected.length; collected.push(card);
+  const rc=await revealOne(card, SPREADS[spreadK].slots[idx]);
+  await collectToSlot(idx, card, rc);
+}
+
+// 牌阵抽满 → 完整解读 + 定格
+function finishSpread(){
+  showReading(collected, SPREADS[spreadK].slots);
+  aiAction.classList.add('show');
+  toast(SPREADS[spreadK].name+' · 牌阵已成');
+  busy=false; manualMode=false; spreadActive=false; drawPill.disabled=false; shufflePill.disabled=false;
+  phase='done'; revealed=true; scene.classList.add('dim');
+  stageHint.textContent= running ? '🖐 张开手掌 · 重启一卦' : '点「叩问命运」· 再卜一卦';
+}
+
+// 重置回可选牌状态(清空牌阵)
+function resetRound(){
+  revealed=false; fistLatch=false; manualMode=false; manualVel=0; spreadActive=false; collected=[];
+  hideReading(); revealEl.innerHTML=''; scene.classList.remove('dim');
+  aiAction.classList.remove('show'); aiReading.classList.remove('show','loading'); aiReadingBody.textContent='';
+  const box=document.getElementById('slots'); box.classList.remove('show'); box.innerHTML='';
+  phase='idle';
+  stageHint.textContent= running ? '🖐 移动手掌选牌 · ✊ 握拳抓取' : '轻触卡牌 · 或开启摄像头以手势叩问命运';
+}
+
+// 按钮: 命运自动抽满整个牌阵
+async function doDraw(){
+  if(busy) return;
+  busy=true; manualMode=false; revealed=false; drawPill.disabled=true; shufflePill.disabled=true;
+  hideReading(); revealEl.innerHTML=''; startSpread();
+  toast('✦ '+SPREADS[spreadK].name+' · 命运之轮已动 ✦');
+  for(let i=0;i<spreadK;i++){
+    stageHint.textContent=`命数渐定 · ${i+1}/${spreadK}`;
+    await drawOne(false);
+    if(i<spreadK-1){ scene.classList.remove('dim'); await sleep(240); }
+  }
+  finishSpread();
+}
+
+// 手势: 握拳抓取正前一张收进槽位; 抽满才出解读
+async function selectFront(){
+  if(busy) return;
+  busy=true; revealed=false; drawPill.disabled=true; shufflePill.disabled=true;
+  hideReading();
+  if(!spreadActive || collected.length>=spreadK) startSpread();   // 新牌阵
+  stageHint.textContent='牌已入手 · 收入牌阵…';
+  toast('✊ 抓取 '+(collected.length+1)+'/'+spreadK);
+  await drawOne(true);
+  if(collected.length>=spreadK){
+    finishSpread();
+  }else{
+    busy=false; revealed=false; manualMode=false; phase='idle'; scene.classList.remove('dim');
+    stageHint.textContent=`已选 ${collected.length}/${spreadK} · 继续移动手掌选下一张`;
+  }
+}
+
+function showReading(cards, slots){
+  readingEl.innerHTML=cards.map((c,i)=>{
+    const rev=c.reversed, mean=rev?c.rev:c.up, suit=c.arcana==='major'?'大阿尔卡那':c.suit;
+    return `<div class="row">
+      <div class="ic ${rev?'rev':''}">${c.emoji}</div>
+      <div>
+        <div class="slot">${slots[i]?slots[i]+' · ':''}${suit}</div>
+        <div class="title">${c.name}<small>${c.en}</small>
+          <span class="pos-tag ${rev?'badge-rev':'badge-up'}">${rev?'逆位':'正位'}</span></div>
+        <div class="mean">${mean}</div>
+      </div></div>`;
+  }).join('');
+  readingEl.classList.add('show');
+}
+function hideReading(){readingEl.classList.remove('show');}
+
+async function requestAIReading(){
+  if(!collected.length || busy) return;
+  const endpoint=document.body.dataset.aiEndpoint||'/api/reading';
+  const payload={
+    question:questionInput.value.trim(),
+    spread:SPREADS[spreadK].name,
+    cards:collected.map((card,index)=>({
+      position:SPREADS[spreadK].slots[index],
+      name:card.name,
+      englishName:card.en,
+      orientation:card.reversed?'逆位':'正位',
+      meaning:card.reversed?card.rev:card.up
+    }))
+  };
+  aiReadingBtn.disabled=true;
+  aiReading.classList.add('show','loading');
+  aiReadingBody.textContent='正在聆听牌与牌之间的回响…';
+  try{
+    const response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    let result={}; try{result=await response.json();}catch(e){}
+    if(!response.ok) throw new Error(result.error||'AI 服务暂时不可用');
+    aiReadingBody.textContent=result.reading||'牌面保持了沉默，请稍后重试。';
+    aiReading.classList.remove('loading');
+    aiReading.scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(error){
+    aiReading.classList.remove('loading');
+    aiReadingBody.textContent=`暂时无法完成 AI 解读：${error.message}。如果你正在 GitHub Pages 预览，请先把 AI 接口地址指向已部署的 EdgeOne 站点。`;
+  }finally{
+    aiReadingBtn.disabled=false;
+  }
+}
+
+function shuffle(){
+  if(busy) return;
+  resetRound();                                  // 清空牌阵与已选
+  vel=(9+Math.random()*5)*(Math.random()<.5?1:-1);
+  phase='spin';
+  onLanded=()=>{ phase='idle'; stageHint.textContent= running?'🖐 移动手掌选牌 · ✊ 握拳抓取':'轻触卡牌 · 或开启摄像头以手势叩问命运'; };
+  stageHint.textContent='洗牌中 · 默念你的问题…';
+  toast('🖐 洗牌');
+}
+
+/* ===== 牌阵选择器(右上角) ===== */
+function buildSpreads(){
+  const box=document.getElementById('spreads');
+  box.innerHTML='<div class="sp-hd" id="spHd">✦ 牌阵</div><div class="sp-body">'+
+    [1,3,5].map(k=>{const s=SPREADS[k];return `<div class="sp${k===spreadK?' active open':''}" data-k="${k}">
+      <div class="sp-row"><span class="sp-n">${s.n}</span><span class="sp-name">${s.name}<em>${s.cnt}张</em></span></div>
+      <div class="sp-intro">${s.intro}</div></div>`;}).join('')+'</div>';
+  box.querySelectorAll('.sp').forEach(el=>el.addEventListener('click',()=>{
+    const k=+el.dataset.k;
+    if(k===spreadK){ el.classList.toggle('open'); return; }  // 再点收/展简介
+    setSpread(k);
+  }));
+  document.getElementById('spHd').addEventListener('click',()=>box.classList.toggle('pinned')); // 手机点头部展开
+}
+function setSpread(k){
+  if(busy) return;
+  spreadK=k;
+  document.querySelectorAll('#spreads .sp').forEach(el=>{
+    const on=+el.dataset.k===k; el.classList.toggle('active',on); el.classList.toggle('open',on);
+  });
+  if(revealed||spreadActive) resetRound();         // 换牌阵清空当前
+  toast(SPREADS[k].name+' · '+SPREADS[k].cnt+'张');
+}
+
+/* ============ MediaPipe 手势 (优化: 阈值+投票消抖+短触发) ============ */
+const video=document.getElementById('cam');
+const overlay=document.getElementById('overlay');
+const octx=overlay.getContext('2d');
+const dot=document.getElementById('dot');
+const statusTxt=document.getElementById('statusTxt');
+const gnow=document.getElementById('gnow');
+const chargeEl=document.getElementById('charge');
+const chargeBar=document.getElementById('chargeBar');
+const startBtn=document.getElementById('startBtn');
+
+let recognizer=null, running=false, lastVideoTime=-1, lastTs=0, frameErr=0;
+let fistCount=0; const FIST_NEED=9;          // 约0.45s, 更跟手
+let missTol=0;                                // 握拳闪断容错
+let cooldown=0, vLock=false;
+let gHist=[];                                 // 多帧投票
+const MIN_SCORE=0.45;
+const GES_CN={Open_Palm:'张掌 🖐',Closed_Fist:'握拳 ✊',Victory:'胜利 ✌',Pointing_Up:'指上 ☝',Thumb_Up:'赞 👍',Thumb_Down:'踩 👎',ILoveYou:'🤟',None:'—'};
+
+async function loadMP(){
+  statusTxt.textContent='加载模型…';
+  const mod=await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14');
+  window.__MP=mod;
+  const fs=await mod.FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm');
+  const opts=del=>({
+    baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task',delegate:del},
+    runningMode:'VIDEO',numHands:1, minHandDetectionConfidence:0.5, minTrackingConfidence:0.5});
+  try{
+    recognizer=await mod.GestureRecognizer.createFromOptions(fs,opts('GPU'));
+  }catch(e){
+    console.warn('GPU delegate 创建失败, 回退 CPU:',e.message);
+    recognizer=await mod.GestureRecognizer.createFromOptions(fs,opts('CPU'));
+  }
+}
+const diag=document.getElementById('diag');
+async function startCam(){
+  const camW=document.getElementById('camWidget');
+  camW.classList.remove('collapsed'); document.getElementById('camToggle').textContent='▼';
+  // 安全上下文 / API 自检
+  if(!window.isSecureContext){
+    diag.textContent='⚠ 当前非安全环境，无法用摄像头。请用 http://localhost:8765 打开本页，别直接双击 index.html 文件。';
+    toast('⚠ 请用 localhost 打开'); return;
+  }
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+    diag.textContent='⚠ 浏览器不支持摄像头 API（请用 Chrome/Edge 最新版）。'; return;
+  }
+  try{
+    if(!recognizer){ diag.textContent='正在加载手势模型(约8MB，首次稍候)…'; statusTxt.textContent='加载模型…'; await loadMP(); }
+    diag.textContent='正在请求摄像头权限，请在弹窗点「允许」…'; statusTxt.textContent='请求摄像头…';
+    const stream=await navigator.mediaDevices.getUserMedia({video:{width:640,height:480,frameRate:{ideal:30}}});
+    video.srcObject=stream; await video.play();
+    // 关键: 等真实分辨率就绪再识别, 否则首帧 0 尺寸 → MediaPipe "ROI must be > 0" 整图崩溃
+    if(!video.videoWidth || !video.videoHeight){
+      await new Promise(res=>{ let done=false; const fin=()=>{if(done)return;done=true;video.removeEventListener('loadeddata',fin);res();};
+        video.addEventListener('loadeddata',fin); setTimeout(fin,2000); });
+    }
+    overlay.width=video.videoWidth||640; overlay.height=video.videoHeight||480;
+    lastTs=0; frameErr=0; lastVideoTime=-1;
+    running=true; dot.classList.add('on'); statusTxt.textContent='识别中'; startBtn.textContent='关闭摄像头';
+    camPill.textContent='🎥 手势已开'; diag.textContent='✓ 摄像头已开 · 移动手掌左右滚动选牌 · 握拳抓取 · ✌切牌阵';
+    stageHint.textContent='🖐 移动手掌选牌 · ✊ 握拳抓取';
+    loop();
+  }catch(e){
+    console.error(e); statusTxt.textContent='失败';
+    const map={NotAllowedError:'摄像头被拒绝/未授权 → Chrome 地址栏左侧🔒里允许相机；或 macOS 系统设置→隐私→摄像头 勾选 Chrome',
+      NotReadableError:'摄像头被其他程序占用 → 关掉 FaceTime/Zoom/钉钉等再试',
+      NotFoundError:'没检测到摄像头设备',
+      AbortError:'摄像头启动中断，请重试'};
+    diag.textContent='⚠ '+(map[e.name]||(e.name+': '+e.message));
+    toast('⚠ '+(e.name||'失败'));
+  }
+}
+function stopCam(){
+  running=false; dot.classList.remove('on'); statusTxt.textContent='GESTURE'; startBtn.textContent='开启摄像头';
+  gnow.textContent='—'; octx.clearRect(0,0,overlay.width,overlay.height);
+  const s=video.srcObject; if(s)s.getTracks().forEach(t=>t.stop()); video.srcObject=null;
+  chargeEl.classList.remove('show'); fistCount=0;
+  const cp=document.getElementById('camPill'); if(cp)cp.textContent='🎥 开启手势';
+  const dg=document.getElementById('diag'); if(dg)dg.textContent='';
+}
+function loop(){
+  if(!running) return;
+  requestAnimationFrame(loop);                       // 先排下一帧, 即使本帧抛错也不会让循环死掉
+  if(!recognizer || video.readyState<2 || !video.videoWidth || !video.videoHeight) return;  // 帧未就绪
+  if(video.currentTime===lastVideoTime) return;      // 同一帧不重复识别
+  lastVideoTime=video.currentTime;
+  let ts=performance.now(); if(ts<=lastTs) ts=lastTs+1; lastTs=ts;   // 时间戳严格递增
+  try{
+    handleRes(recognizer.recognizeForVideo(video, ts));
+    frameErr=0;
+  }catch(err){
+    if(frameErr++<3) console.warn('手势帧跳过:',err.message);       // 偶发坏帧, 跳过不刷屏
+    octx.clearRect(0,0,overlay.width,overlay.height);
+  }
+}
+function vote(g){ gHist.push(g); if(gHist.length>7)gHist.shift();
+  const cnt={}; let best=g,bn=0; for(const x of gHist){cnt[x]=(cnt[x]||0)+1; if(cnt[x]>bn){bn=cnt[x];best=x;}} return best; }
+let smHandX=0.5, smVel=0;        // 手位/速度平滑
+let openHold=0, fistHist=[];      // 张掌保持计数 / 握拳布尔消抖
+// 几何握拳判定(各指尖比指节更靠近腕=卷曲), 比分类器稳得多
+function isFist(lm){
+  const w=lm[0], d=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+  let curled=0;
+  [[8,6],[12,10],[16,14],[20,18]].forEach(([tip,pip])=>{ if(d(lm[tip],w)<d(lm[pip],w)) curled++; });
+  return curled>=3;
+}
+
+function handleRes(res){
+  octx.clearRect(0,0,overlay.width,overlay.height);
+  let raw='None', score=0;
+  if(res.landmarks&&res.landmarks.length){
+    const du=new window.__MP.DrawingUtils(octx);
+    const dc=window.__drawColors||['rgba(224,183,58,.75)','#e0c587'];
+    for(const lm of res.landmarks){
+      du.drawConnectors(lm, window.__MP.GestureRecognizer.HAND_CONNECTIONS,{color:dc[0],lineWidth:2.5});
+      du.drawLandmarks(lm,{color:dc[1],radius:2.5});
+    }
+  }
+  if(res.gestures&&res.gestures.length&&res.gestures[0].length){
+    const top=res.gestures[0][0]; score=top.score; if(score>=MIN_SCORE) raw=top.categoryName;
+  }
+  const g=vote(raw);                          // 分类器投票(仅用于✌切牌阵)
+
+  // 手位 + 几何握拳(布尔4帧消抖)
+  const hasHand = res.landmarks && res.landmarks.length>0;
+  let fist=false;
+  if(hasHand){ const lm=res.landmarks[0]; const hx=1-((lm[0].x+lm[9].x)/2); smHandX += (hx-smHandX)*0.4; fist=isFist(lm); }
+  fistHist.push(fist?1:0); if(fistHist.length>4) fistHist.shift();
+  const fistStable = hasHand && fistHist.reduce((a,b)=>a+b,0)>=3;   // 4帧里≥3帧握拳
+  gnow.textContent = !hasHand?'—':(fistStable?'握拳 ✊':'手掌 🖐');
+
+  if(cooldown>0){cooldown--; return;}
+
+  // ✌ 切牌阵(仅非握拳时)
+  if(!fistStable && g==='Victory'&&!busy){ if(!vLock){vLock=true; const seq={1:3,3:5,5:1}; setSpread(seq[spreadK]); cooldown=22;} }
+  else if(fistStable||g!=='Victory') vLock=false;
+
+  if(busy) return;
+
+  // 揭晓定格: 张开手掌(非握拳)保持约0.4s → 重开新一卦(防刚抓完误触)
+  if(revealed){
+    if(!fistStable){ if(++openHold>10){ resetRound(); toast('🖐 重新开始'); cooldown=16; openHold=0; } }
+    else openHold=0;
+    return;
+  }
+
+  if(fistStable){
+    // ✊ 蓄力抓取当前正前的牌, 抓取时停止滚动
+    manualVel=0; smVel=0; if(phase==='idle')phase='manual'; manualMode=true;
+    if(fistLatch) return;                              // 这一握还没松开 → 不重复抓
+    fistCount++; chargeEl.classList.add('show');
+    chargeBar.style.width=Math.min(100,fistCount/FIST_NEED*100)+'%';
+    if(fistCount>=FIST_NEED){chargeEl.classList.remove('show');chargeBar.style.width='0%';fistCount=0;fistLatch=true;cooldown=14;selectFront();}
+  } else {
+    fistLatch=false; openHold=0;                       // 松开拳 → 重新武装
+    if(fistCount>0){fistCount=0;chargeEl.classList.remove('show');chargeBar.style.width='0%';}
+    // 🖐 张掌左右移动 → 实时滚动转盘选牌(平滑+大死区, 易停稳对准)
+    if(hasHand && (phase==='idle'||phase==='manual')){
+      if(!manualMode){ manualMode=true; stageHint.textContent='← 移动手掌滚动选牌 · 握拳抓取 →'; }
+      phase='manual';
+      const dx=smHandX-0.5;
+      const target = Math.abs(dx)>0.11 ? (dx-Math.sign(dx)*0.11)*9 : 0;
+      smVel += (target-smVel)*0.25;
+      manualVel = Math.abs(smVel)<0.04?0:smVel;
+    } else if(!hasHand && phase==='manual'){
+      phase='idle'; manualMode=false; manualVel=0; smVel=0;
+      stageHint.textContent='🖐 移动手掌选牌 · ✊ 握拳抓取';
+    }
+  }
+}
+/* ============ 事件 ============ */
+const camPill=document.getElementById('camPill');
+drawPill.addEventListener('click',doDraw);
+shufflePill.addEventListener('click',shuffle);
+aiReadingBtn.addEventListener('click',requestAIReading);
+questionInput.addEventListener('input',()=>{questionCount.textContent=`${questionInput.value.length} / 300`;});
+camPill.addEventListener('click',()=>running?stopCam():startCam());
+startBtn.addEventListener('click',()=>running?stopCam():startCam());
+const camW=document.getElementById('camWidget'),camToggle=document.getElementById('camToggle');
+document.getElementById('camHd').addEventListener('click',()=>{camW.classList.toggle('collapsed');camToggle.textContent=camW.classList.contains('collapsed')?'▲':'▼';});
+addEventListener('resize',()=>{buildCarousel();});
+
+/* 符文环(神秘氛围) */
+function buildRuneRing(){
+  const ring=document.getElementById('runeRing'); if(!ring)return;
+  const glyphs=THEMES[window.__theme||'noir'].ring;
+  const rad=ring.clientWidth/2-16;
+  ring.innerHTML=glyphs.map((gl,i)=>{
+    const a=i*30*Math.PI/180, x=Math.cos(a)*rad, y=Math.sin(a)*rad;
+    return `<span style="transform:translate(-50%,-50%) translate(${x}px,${y}px) rotate(${i*30+90}deg)">${gl}</span>`;
+  }).join('');
+}
+
+/* ============ 主题(幽冥 / 百变小樱) ============ */
+const THEMES={
+  noir:{ en:'ARCANA NOCTURNE', cn:'幽 冥 塔 罗 · 命运在转轮之中',
+    sub:'移动手掌左右滚动转盘 · 握拳抓取你选中的牌',
+    ring:['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓'],
+    draw:['rgba(224,183,58,.75)','#e0c587'], toggle:'🌸 小樱风', next:'sakura' },
+  sakura:{ en:'TAROT', cn:'樱 花 塔 罗 · 倾听此刻的内心',
+    sub:'移动手掌左右滚动牌阵 · 握拳收服你选中的卡',
+    ring:['✦','☀','☽','❀','✶','★','✷','❀','✦','☀','☽','❀'],
+    draw:['rgba(232,92,151,.8)','#ff89bf'], toggle:'🌙 幽冥风', next:'noir' },
+};
+let THEME=localStorage.getItem('tarot-theme')||'sakura'; if(!THEMES[THEME])THEME='sakura';
+window.__theme=THEME; window.__drawColors=THEMES[THEME].draw;
+function applyTheme(t){
+  THEME=t; window.__theme=t; window.__drawColors=THEMES[t].draw;
+  try{localStorage.setItem('tarot-theme',t);}catch(e){}
+  document.body.dataset.theme=t;
+  const cfg=THEMES[t];
+  document.querySelector('header .en').textContent=cfg.en;
+  document.querySelector('header .cn').textContent=cfg.cn;
+  document.querySelector('header .sub').textContent=cfg.sub;
+  const tt=document.getElementById('themeToggle'); if(tt)tt.textContent=cfg.toggle;
+  buildRuneRing();
+}
+document.getElementById('themeToggle').addEventListener('click',()=>applyTheme(THEMES[THEME].next));
+
+/* 启动 */
+buildCarousel(); buildSpreads(); applyTheme(THEME); tick();
+addEventListener('resize',buildRuneRing);
+window.__tarot={pickOne,doDraw,selectFront,setSpread,applyTheme};
+</script>
+</body>
+</html>
