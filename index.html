@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>幽冥塔罗 · Arcana</title>
+<title>Tarot · Sakura AI 塔罗</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,500;1,500&family=Noto+Serif+SC:wght@500;600&display=swap" rel="stylesheet">
@@ -315,6 +315,26 @@
   body[data-theme="sakura"] .slot.cur{box-shadow:0 0 18px rgba(255,140,190,.45)}
   body[data-theme="sakura"] .theme-toggle{
     background:rgba(255,246,251,.7);color:#d24d8d;border-color:var(--gold-dim);box-shadow:0 4px 16px rgba(214,90,150,.22)}
+  /* ===== DeepSeek AI 解读 ===== */
+  .question-card,.ai-reading{width:min(94vw,720px);margin:18px auto 0;padding:18px;border-radius:16px;
+    background:linear-gradient(160deg,rgba(25,20,39,.78),rgba(18,15,31,.78));border:1px solid var(--line);
+    backdrop-filter:blur(12px);box-shadow:0 12px 32px rgba(0,0,0,.35)}
+  .question-card label,.ai-title{display:block;font-size:12px;letter-spacing:2px;color:var(--gold);margin-bottom:10px}
+  .question-card textarea{display:block;width:100%;min-height:78px;resize:vertical;padding:12px 14px;border-radius:10px;
+    color:var(--ink);background:rgba(0,0,0,.2);border:1px solid rgba(224,183,58,.2);
+    font:13px/1.8 "Noto Serif SC",-apple-system,"PingFang SC",serif;outline:none}
+  .question-card textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(224,183,58,.08)}
+  .question-meta{display:flex;justify-content:space-between;gap:12px;margin-top:8px;color:var(--ink-dim);font-size:10px}
+  .ai-action{display:none;justify-content:center;margin-top:14px}
+  .ai-action.show{display:flex}
+  .ai-reading{display:none;line-height:1.95;color:var(--ink)}
+  .ai-reading.show{display:block;animation:fadeup .6s both}
+  .ai-reading.loading{opacity:.75}
+  .ai-reading .ai-body{white-space:pre-wrap;font-size:14px}
+  .ai-reading .ai-note{margin-top:13px;padding-top:11px;border-top:1px solid var(--line);font-size:10px;color:var(--ink-dim)}
+  body[data-theme="sakura"] .question-card,
+  body[data-theme="sakura"] .ai-reading{background:rgba(255,246,251,.86);box-shadow:0 12px 32px rgba(214,90,150,.16)}
+  body[data-theme="sakura"] .question-card textarea{background:rgba(255,255,255,.7);border-color:rgba(232,92,151,.22)}
 
   @media(max-width:480px){
     .theme-toggle{top:10px;left:10px;padding:7px 12px;font-size:10px}
@@ -326,20 +346,20 @@
   }
 </style>
 </head>
-<body>
+<body data-theme="sakura">
 <canvas id="stars"></canvas>
 <div class="fog"></div>
 <div class="vignette"></div>
 <div class="grain"></div>
 <div class="toast" id="toast"></div>
-<button class="theme-toggle" id="themeToggle">🌸 小樱风</button>
+<button class="theme-toggle" id="themeToggle">🌙 幽冥风</button>
 
 <div class="wrap">
   <header>
     <div class="orn">✦ ━━━━━ ✦ ━━━━━ ✦</div>
-    <h1 class="en">ARCANA NOCTURNE</h1>
-    <div class="cn">幽 冥 塔 罗 · 命运在转轮之中</div>
-    <div class="sub">移动手掌左右滚动转盘 · 握拳抓取你选中的牌</div>
+    <h1 class="en">TAROT</h1>
+    <div class="cn">樱 花 塔 罗 · 倾听此刻的内心</div>
+    <div class="sub">移动手掌左右滚动牌阵 · 握拳收取你选中的卡</div>
   </header>
 
   <div class="stage" id="stage">
@@ -355,11 +375,25 @@
 
   <div class="reading" id="reading"></div>
 
+  <section class="question-card" aria-labelledby="questionLabel">
+    <label id="questionLabel" for="questionInput">✦ 写下你想询问的问题</label>
+    <textarea id="questionInput" maxlength="300" placeholder="例如：我应该如何看待目前的关系？也可以留空，进行开放式自我探索。"></textarea>
+    <div class="question-meta"><span>问题只会在请求 AI 解读时发送</span><span id="questionCount">0 / 300</span></div>
+  </section>
+
   <div class="actions">
     <button class="pill" id="drawPill">✦ 叩 问 命 运 ✦</button>
     <button class="pill ghost" id="shufflePill">洗 牌</button>
     <button class="pill ghost" id="camPill">🎥 开启手势</button>
   </div>
+  <div class="ai-action" id="aiAction">
+    <button class="pill" id="aiReadingBtn">✦ DeepSeek AI 深度解读 ✦</button>
+  </div>
+  <section class="ai-reading" id="aiReading" aria-live="polite">
+    <div class="ai-title">✦ AI 心灵解读</div>
+    <div class="ai-body" id="aiReadingBody"></div>
+    <div class="ai-note">AI 解读仅供娱乐与自我反思，不替代医疗、法律、心理或投资等专业建议。</div>
+  </section>
   <div id="diag" style="text-align:center;font-size:12px;color:var(--ink-dim);margin-top:12px;min-height:16px;letter-spacing:.5px"></div>
 </div>
 
@@ -377,8 +411,8 @@
 </aside>
 
 <footer>
-  🖐 移动手掌滚动选牌 · ✊ 握拳抓取 · ✌ 切换牌阵　|　MediaPipe 本地识别 · 画面不上传 · 零后端<br>
-  韦特塔罗 78 张 · 仅供娱乐与自省，命运终在你手 ✦
+  🖐 移动手掌滚动选牌 · ✊ 握拳抓取 · ✌ 切换牌阵　|　MediaPipe 本地识别 · 摄像头画面不上传<br>
+  Tarot · Sakura × DeepSeek AI · 仅供娱乐与自我反思 ✦
 </footer>
 
 <script src="tarot-data.js"></script>
@@ -436,6 +470,12 @@ const stageHint=document.getElementById('stageHint');
 const toastEl=document.getElementById('toast');
 const drawPill=document.getElementById('drawPill');
 const shufflePill=document.getElementById('shufflePill');
+const aiAction=document.getElementById('aiAction');
+const aiReading=document.getElementById('aiReading');
+const aiReadingBody=document.getElementById('aiReadingBody');
+const aiReadingBtn=document.getElementById('aiReadingBtn');
+const questionInput=document.getElementById('questionInput');
+const questionCount=document.getElementById('questionCount');
 
 const N=20, STEP=360/N;          // 20张牌圆柱, 正前显示约7张
 let R=420, spin=0, vel=0;
@@ -592,6 +632,7 @@ async function drawOne(useFront){
 // 牌阵抽满 → 完整解读 + 定格
 function finishSpread(){
   showReading(collected, SPREADS[spreadK].slots);
+  aiAction.classList.add('show');
   toast(SPREADS[spreadK].name+' · 牌阵已成');
   busy=false; manualMode=false; spreadActive=false; drawPill.disabled=false; shufflePill.disabled=false;
   phase='done'; revealed=true; scene.classList.add('dim');
@@ -602,6 +643,7 @@ function finishSpread(){
 function resetRound(){
   revealed=false; fistLatch=false; manualMode=false; manualVel=0; spreadActive=false; collected=[];
   hideReading(); revealEl.innerHTML=''; scene.classList.remove('dim');
+  aiAction.classList.remove('show'); aiReading.classList.remove('show','loading'); aiReadingBody.textContent='';
   const box=document.getElementById('slots'); box.classList.remove('show'); box.innerHTML='';
   phase='idle';
   stageHint.textContent= running ? '🖐 移动手掌选牌 · ✊ 握拳抓取' : '轻触卡牌 · 或开启摄像头以手势叩问命运';
@@ -653,6 +695,38 @@ function showReading(cards, slots){
   readingEl.classList.add('show');
 }
 function hideReading(){readingEl.classList.remove('show');}
+
+async function requestAIReading(){
+  if(!collected.length || busy) return;
+  const endpoint=document.body.dataset.aiEndpoint||'/api/reading';
+  const payload={
+    question:questionInput.value.trim(),
+    spread:SPREADS[spreadK].name,
+    cards:collected.map((card,index)=>({
+      position:SPREADS[spreadK].slots[index],
+      name:card.name,
+      englishName:card.en,
+      orientation:card.reversed?'逆位':'正位',
+      meaning:card.reversed?card.rev:card.up
+    }))
+  };
+  aiReadingBtn.disabled=true;
+  aiReading.classList.add('show','loading');
+  aiReadingBody.textContent='正在聆听牌与牌之间的回响…';
+  try{
+    const response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    let result={}; try{result=await response.json();}catch(e){}
+    if(!response.ok) throw new Error(result.error||'AI 服务暂时不可用');
+    aiReadingBody.textContent=result.reading||'牌面保持了沉默，请稍后重试。';
+    aiReading.classList.remove('loading');
+    aiReading.scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(error){
+    aiReading.classList.remove('loading');
+    aiReadingBody.textContent=`暂时无法完成 AI 解读：${error.message}。如果你正在 GitHub Pages 预览，请先把 AI 接口地址指向已部署的 EdgeOne 站点。`;
+  }finally{
+    aiReadingBtn.disabled=false;
+  }
+}
 
 function shuffle(){
   if(busy) return;
@@ -862,6 +936,8 @@ function handleRes(res){
 const camPill=document.getElementById('camPill');
 drawPill.addEventListener('click',doDraw);
 shufflePill.addEventListener('click',shuffle);
+aiReadingBtn.addEventListener('click',requestAIReading);
+questionInput.addEventListener('input',()=>{questionCount.textContent=`${questionInput.value.length} / 300`;});
 camPill.addEventListener('click',()=>running?stopCam():startCam());
 startBtn.addEventListener('click',()=>running?stopCam():startCam());
 const camW=document.getElementById('camWidget'),camToggle=document.getElementById('camToggle');
@@ -885,12 +961,12 @@ const THEMES={
     sub:'移动手掌左右滚动转盘 · 握拳抓取你选中的牌',
     ring:['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓'],
     draw:['rgba(224,183,58,.75)','#e0c587'], toggle:'🌸 小樱风', next:'sakura' },
-  sakura:{ en:'SAKURA ARCANA', cn:'百 变 小 樱 · 命运之星藏于卡牌',
+  sakura:{ en:'TAROT', cn:'樱 花 塔 罗 · 倾听此刻的内心',
     sub:'移动手掌左右滚动牌阵 · 握拳收服你选中的卡',
     ring:['✦','☀','☽','❀','✶','★','✷','❀','✦','☀','☽','❀'],
     draw:['rgba(232,92,151,.8)','#ff89bf'], toggle:'🌙 幽冥风', next:'noir' },
 };
-let THEME=localStorage.getItem('tarot-theme')||'noir'; if(!THEMES[THEME])THEME='noir';
+let THEME=localStorage.getItem('tarot-theme')||'sakura'; if(!THEMES[THEME])THEME='sakura';
 window.__theme=THEME; window.__drawColors=THEMES[THEME].draw;
 function applyTheme(t){
   THEME=t; window.__theme=t; window.__drawColors=THEMES[t].draw;
