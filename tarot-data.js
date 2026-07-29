@@ -107,13 +107,14 @@ const MINOR_MEANINGS = {
 function buildDeck() {
   const deck = [];
   for (const c of MAJOR) {
-    deck.push({ ...c, arcana: "major", suit: null, color: "#9a8bb0" });
+    deck.push({ ...c, image: `assets/cards/${c.id}.png`, arcana: "major", suit: null, color: "#9a8bb0" });
   }
   for (const s of SUITS) {
     const list = MINOR_MEANINGS[s.key];
     list.forEach((m, i) => {
       deck.push({
         id: `${s.key}${i + 1}`,
+        image: `assets/cards/${s.key}${i + 1}.png`,
         name: m[0], en: m[1], up: m[2], rev: m[3],
         emoji: s.emoji, arcana: "minor",
         suit: s.name, suitTheme: s.theme, color: s.color,

@@ -109,11 +109,11 @@
   .rc .ft{transform:rotateY(180deg);padding:10px;
     background:linear-gradient(165deg,var(--card2),var(--card));border:1px solid var(--line);
     box-shadow:0 16px 40px rgba(0,0,0,.7),inset 0 0 30px rgba(224,183,58,.06)}
-  .ft .pos{position:absolute;top:8px;font-size:10px;letter-spacing:2px}
-  .ft .art{font-size:clamp(42px,11vw,58px);margin-top:8px;filter:drop-shadow(0 0 10px rgba(224,183,58,.3))}
+  .ft .pos{position:absolute;top:6px;z-index:2;font-size:9px;letter-spacing:1px;padding:2px 8px;border-radius:10px;background:rgba(255,246,251,.88)}
+  .ft .art{position:absolute;inset:0;padding:5px;filter:drop-shadow(0 0 10px rgba(224,183,58,.3))}
   .ft .art.rev{transform:rotate(180deg)}
-  .ft .nm{font-family:"Cinzel",serif;font-size:clamp(14px,3.4vw,17px);margin-top:8px;letter-spacing:1px;color:var(--gold-bright)}
-  .ft .cnm{font-size:12px;color:var(--ink-dim);margin-top:2px;letter-spacing:2px}
+  .ft .art img{width:100%;height:100%;display:block;object-fit:cover;border-radius:8px;border:2px solid rgba(255,185,220,.82)}
+  .ft .nm,.ft .cnm{display:none}
   .badge-up{color:var(--gold)} .badge-rev{color:#c98aa0}
 
   .stage-hint{position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);font-family:"Cormorant Garamond",serif;
@@ -126,7 +126,8 @@
   .reading .row{display:flex;gap:15px;padding:17px 18px;border-radius:14px;margin-bottom:12px;
     background:linear-gradient(160deg,rgba(25,20,39,.7),rgba(18,15,31,.7));border:1px solid var(--line);
     backdrop-filter:blur(10px);box-shadow:0 10px 30px rgba(0,0,0,.4)}
-  .reading .ic{font-size:36px;flex:0 0 auto;filter:drop-shadow(0 0 8px rgba(224,183,58,.3))}
+  .reading .ic{width:58px;aspect-ratio:2/3;object-fit:cover;border-radius:7px;border:2px solid rgba(255,185,220,.78);
+    flex:0 0 auto;filter:drop-shadow(0 0 8px rgba(224,183,58,.3))}
   .reading .ic.rev{transform:rotate(180deg)}
   .reading .slot{font-family:"Cinzel",serif;font-size:11px;letter-spacing:2px;color:var(--gold);margin-bottom:4px}
   .reading .title{font-size:18px;font-weight:600;color:var(--ink)}
@@ -134,7 +135,8 @@
   .reading .pos-tag{font-size:11px;padding:1px 9px;border-radius:20px;border:1px solid currentColor;margin-left:8px}
   .reading .mean{font-size:13.5px;line-height:1.85;color:#bcb4cc;margin-top:8px}
 
-  .actions{display:flex;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap}
+  .actions{display:none;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap}
+  .actions.ready{display:flex;animation:fadeup .5s both}
   .pill{display:inline-flex;align-items:center;gap:8px;padding:12px 30px;border-radius:2px;cursor:pointer;
     font-family:"Cinzel",serif;font-size:13px;letter-spacing:2px;color:var(--gold-bright);
     background:linear-gradient(180deg,rgba(40,32,20,.6),rgba(20,16,12,.6));
@@ -143,6 +145,57 @@
   .pill:hover{transform:translateY(-2px);border-color:var(--gold);box-shadow:0 0 28px rgba(224,183,58,.28)}
   .pill.ghost{color:var(--ink-dim);border-color:rgba(255,255,255,.12);background:rgba(255,255,255,.02);box-shadow:none}
   .pill:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+  /* ===== 三步仪式引导 ===== */
+  .ritual-flow{width:min(94vw,760px);margin:18px auto 4px;padding:20px;border-radius:18px;
+    background:rgba(255,246,251,.82);border:1px solid rgba(232,92,151,.25);
+    box-shadow:0 14px 38px rgba(214,90,150,.18);backdrop-filter:blur(14px)}
+  .ritual-flow.done{padding:11px 16px}
+  .ritual-flow.done .ritual-stepper,.ritual-flow.done .ritual-panel{display:none}
+  .ritual-summary{display:none;align-items:center;justify-content:space-between;gap:14px;color:var(--ink-dim);font-size:12px}
+  .ritual-flow.done .ritual-summary{display:flex}
+  .ritual-stepper{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:18px}
+  .ritual-dot{display:flex;align-items:center;justify-content:center;width:27px;height:27px;border-radius:50%;
+    border:1px solid rgba(232,92,151,.25);color:var(--ink-dim);font:11px "Cinzel",serif;background:rgba(255,255,255,.56)}
+  .ritual-dot.active{color:#fff;background:linear-gradient(135deg,#ff8fc1,#d86da8);border-color:#ff8fc1;box-shadow:0 0 18px rgba(232,92,151,.34)}
+  .ritual-line{width:40px;height:1px;background:rgba(232,92,151,.22)}
+  .ritual-panel{display:none;text-align:center}
+  .ritual-panel.active{display:block;animation:fadeup .45s both}
+  .ritual-kicker{font:10px "Cinzel",serif;letter-spacing:3px;color:var(--gold);margin-bottom:6px}
+  .ritual-panel h2{font-size:20px;font-weight:600;color:var(--ink);margin:0 0 7px}
+  .ritual-copy{font-size:12px;line-height:1.8;color:var(--ink-dim);margin:0 auto 14px}
+  .ritual-panel textarea{display:block;width:100%;min-height:76px;resize:vertical;padding:12px 14px;border-radius:12px;
+    color:var(--ink);background:rgba(255,255,255,.72);border:1px solid rgba(232,92,151,.22);
+    font:13px/1.8 "Noto Serif SC",-apple-system,"PingFang SC",serif;outline:none}
+  .ritual-panel textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(232,92,151,.08)}
+  .question-meta{display:flex;justify-content:space-between;gap:12px;margin:7px 0 13px;color:var(--ink-dim);font-size:10px}
+  .open-choice{display:flex;align-items:center;justify-content:center;gap:7px;margin:4px 0 15px;color:var(--ink-dim);font-size:11px}
+  .spread-choices{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .spread-choice{appearance:none;padding:14px 10px;border-radius:13px;cursor:pointer;text-align:left;color:var(--ink);
+    border:1px solid rgba(232,92,151,.2);background:rgba(255,255,255,.6);font-family:inherit;transition:.25s}
+  .spread-choice:hover,.spread-choice.selected{transform:translateY(-2px);border-color:var(--gold);background:rgba(255,237,247,.96);
+    box-shadow:0 9px 24px rgba(214,90,150,.16)}
+  .spread-choice strong{display:block;color:#d24d8d;font-size:14px;margin-bottom:5px}
+  .spread-choice span{display:block;color:var(--ink-dim);font-size:10px;line-height:1.6}
+  .hold-wrap{width:min(100%,420px);margin:16px auto 0}
+  .hold-button{position:relative;width:100%;height:54px;border:1px solid var(--gold-dim);border-radius:28px;overflow:hidden;cursor:pointer;
+    color:#fff;background:linear-gradient(135deg,#e96da8,#b76ec7);font-family:inherit;letter-spacing:2px;touch-action:none}
+  .hold-fill{position:absolute;inset:0 auto 0 0;width:0;background:linear-gradient(90deg,rgba(255,255,255,.08),rgba(255,225,241,.45));transition:width .08s linear}
+  .hold-label{position:relative;z-index:1}
+  .stage.flow-locked{opacity:.28;filter:blur(3px);pointer-events:none;max-height:270px}
+  .stage{transition:opacity .6s,filter .6s,max-height .6s}
+  .restart-flow{border:0;background:none;color:var(--gold);cursor:pointer;font-family:inherit;font-size:11px}
+  .gesture-onboard{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:0 0 16px;
+    padding:9px 12px;border-radius:12px;background:rgba(255,255,255,.55);border:1px dashed rgba(232,92,151,.28);
+    color:var(--ink-dim);font-size:11px}
+  .gesture-onboard button{border:1px solid var(--gold-dim);border-radius:18px;padding:6px 12px;cursor:pointer;
+    color:#d24d8d;background:rgba(255,244,250,.86);font-family:inherit}
+  .gesture-onboard button.on{color:#4f9a72;border-color:#78bd98;background:rgba(238,255,246,.9)}
+  .gesture-hud{position:fixed;left:50%;bottom:16px;z-index:19;transform:translateX(-50%);display:none;
+    max-width:min(92vw,560px);padding:9px 16px;border-radius:22px;background:rgba(255,246,251,.92);
+    border:1px solid rgba(232,92,151,.28);box-shadow:0 8px 28px rgba(214,90,150,.2);
+    color:#8f5d7d;font-size:11px;text-align:center;backdrop-filter:blur(12px)}
+  .gesture-hud.show{display:block}
 
   /* ===== 摄像头浮窗 ===== */
   .cam{position:fixed;right:16px;bottom:16px;width:206px;z-index:20;
@@ -209,11 +262,11 @@
   .slot.cur{border-color:var(--gold);border-style:solid;box-shadow:0 0 18px rgba(224,183,58,.32)}
   .slot.cur .lbl{color:var(--gold)}
   .slot.filled{border-style:solid;border-color:var(--line);background:linear-gradient(160deg,var(--card2),var(--card))}
-  .slot .mini{display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transform:scale(.6);transition:opacity .35s,transform .35s}
+  .slot .mini{display:flex;width:100%;height:100%;flex-direction:column;align-items:center;justify-content:center;opacity:0;transform:scale(.6);transition:opacity .35s,transform .35s}
   .slot .mini.in{opacity:1;transform:scale(1)}
-  .slot .mini .e{font-size:clamp(20px,5vw,28px)}
+  .slot .mini .e{width:100%;height:100%;object-fit:cover;border-radius:7px}
   .slot .mini .e.rev{transform:rotate(180deg)}
-  .slot .mini .nn{font-size:9px;color:var(--gold-bright);margin-top:3px;text-align:center;line-height:1.15;letter-spacing:.3px;padding:0 2px}
+  .slot .mini .nn{display:none}
 
   /* ===== 主题切换按钮(左上) ===== */
   .theme-toggle{position:fixed;top:14px;left:14px;z-index:21;cursor:pointer;
@@ -343,6 +396,7 @@
     .stage{height:50vh}
     .spreads{width:158px;top:10px;right:10px;padding:8px 9px}
     .sp{padding:6px 8px} .sp-name{font-size:12px}
+    .ritual-flow{padding:16px 13px}.spread-choices{grid-template-columns:1fr}.spread-choice{text-align:center}
   }
 </style>
 </head>
@@ -362,7 +416,44 @@
     <div class="sub">移动手掌左右滚动牌阵 · 握拳收取你选中的卡</div>
   </header>
 
-  <div class="stage" id="stage">
+  <section class="ritual-flow" id="ritualFlow">
+    <div class="ritual-stepper" aria-label="占卜步骤">
+      <span class="ritual-dot active" data-dot="1">1</span><i class="ritual-line"></i>
+      <span class="ritual-dot" data-dot="2">2</span><i class="ritual-line"></i>
+      <span class="ritual-dot" data-dot="3">3</span>
+    </div>
+    <div class="gesture-onboard"><span id="gestureOnboardText">开启后可全程用手势完成占卜</span><button id="ritualCamBtn">🎥 开启全程手势</button></div>
+    <div class="ritual-panel active" data-step="1">
+      <div class="ritual-kicker">STEP ONE · INTENTION</div>
+      <h2>写下此刻最想询问的问题</h2>
+      <p class="ritual-copy">让问题具体而温柔。它只会在你主动请求 AI 解读时发送。</p>
+      <textarea id="questionInput" maxlength="300" placeholder="例如：我该如何看待目前这段关系？"></textarea>
+      <div class="question-meta"><span>不会上传摄像头画面</span><span id="questionCount">0 / 300</span></div>
+      <label class="open-choice"><input type="checkbox" id="openExploration"> 我没有具体问题，进行开放式探索</label>
+      <button class="pill" id="questionNext" disabled>下一步 · 选择牌阵</button>
+    </div>
+    <div class="ritual-panel" data-step="2">
+      <div class="ritual-kicker">STEP TWO · SPREAD</div>
+      <h2>选择回应你的牌阵</h2>
+      <p class="ritual-copy">问题越复杂，可以选择越完整的牌阵。</p>
+      <div class="spread-choices">
+        <button class="spread-choice" data-spread="1"><strong>圣示牌 · 1 张</strong><span>每日指引、简单提问与当下核心</span></button>
+        <button class="spread-choice" data-spread="3"><strong>时间之流 · 3 张</strong><span>过去、现在与未来的发展脉络</span></button>
+        <button class="spread-choice" data-spread="5"><strong>十字牌阵 · 5 张</strong><span>现状、挑战、根源、方向与结果</span></button>
+      </div>
+    </div>
+    <div class="ritual-panel" data-step="3">
+      <div class="ritual-kicker">STEP THREE · SHUFFLE</div>
+      <h2>静心片刻，让牌回应你</h2>
+      <p class="ritual-copy" id="ritualPrompt">深呼吸，默念你的问题。按住按钮，直到樱花环完整亮起。</p>
+      <div class="hold-wrap">
+        <button class="hold-button" id="holdShuffle"><span class="hold-fill" id="holdFill"></span><span class="hold-label">按住洗牌</span></button>
+      </div>
+    </div>
+    <div class="ritual-summary"><span id="ritualSummaryText">问题与牌阵已准备</span><button class="restart-flow" id="restartFlow">重新开始仪式</button></div>
+  </section>
+
+  <div class="stage flow-locked" id="stage">
     <div class="rune-ring" id="runeRing"></div>
     <div class="glow-core"></div>
     <div class="grab-marker">▼</div>
@@ -375,13 +466,7 @@
 
   <div class="reading" id="reading"></div>
 
-  <section class="question-card" aria-labelledby="questionLabel">
-    <label id="questionLabel" for="questionInput">✦ 写下你想询问的问题</label>
-    <textarea id="questionInput" maxlength="300" placeholder="例如：我应该如何看待目前的关系？也可以留空，进行开放式自我探索。"></textarea>
-    <div class="question-meta"><span>问题只会在请求 AI 解读时发送</span><span id="questionCount">0 / 300</span></div>
-  </section>
-
-  <div class="actions">
+  <div class="actions" id="mainActions">
     <button class="pill" id="drawPill">✦ 叩 问 命 运 ✦</button>
     <button class="pill ghost" id="shufflePill">洗 牌</button>
     <button class="pill ghost" id="camPill">🎥 开启手势</button>
@@ -409,6 +494,7 @@
   </div>
   <div class="btns"><button id="startBtn">开启摄像头</button></div>
 </aside>
+<div class="gesture-hud" id="gestureHud" aria-live="polite">✌ 跳过问题并继续</div>
 
 <footer>
   🖐 移动手掌滚动选牌 · ✊ 握拳抓取 · ✌ 切换牌阵　|　MediaPipe 本地识别 · 摄像头画面不上传<br>
@@ -476,6 +562,15 @@ const aiReadingBody=document.getElementById('aiReadingBody');
 const aiReadingBtn=document.getElementById('aiReadingBtn');
 const questionInput=document.getElementById('questionInput');
 const questionCount=document.getElementById('questionCount');
+const ritualFlow=document.getElementById('ritualFlow');
+const openExploration=document.getElementById('openExploration');
+const questionNext=document.getElementById('questionNext');
+const holdShuffle=document.getElementById('holdShuffle');
+const holdFill=document.getElementById('holdFill');
+const mainActions=document.getElementById('mainActions');
+const ritualCamBtn=document.getElementById('ritualCamBtn');
+const gestureHud=document.getElementById('gestureHud');
+const gestureOnboardText=document.getElementById('gestureOnboardText');
 
 const N=20, STEP=360/N;          // 20张牌圆柱, 正前显示约7张
 let R=420, spin=0, vel=0;
@@ -562,7 +657,7 @@ function cardFace(card, slot){
     <div class="face bk"><span class="sk sk-frame"></span><span class="sk sk-star sk-t">✦</span><span class="sk sk-star sk-b">✦</span><span class="sk sk-name">SAKURA</span><span class="sig">✦</span></div>
     <div class="face ft">
       <span class="pos ${rev?'badge-rev':'badge-up'}">${slot?slot+' · ':''}${posTxt}</span>
-      <div class="art ${rev?'rev':''}">${card.emoji}</div>
+      <div class="art ${rev?'rev':''}"><img src="${card.image}" alt="${card.name}" draggable="false"></div>
       <div class="nm">${card.en}</div>
       <div class="cnm">${card.name}</div>
     </div></div>`;
@@ -576,7 +671,7 @@ function pickOne(){
   return {...c, reversed:Math.random()<0.42};
 }
 function miniCard(card){
-  return `<div class="mini"><span class="e ${card.reversed?'rev':''}">${card.emoji}</span><span class="nn">${card.name}</span></div>`;
+  return `<div class="mini"><img class="e ${card.reversed?'rev':''}" src="${card.image}" alt="${card.name}"><span class="nn">${card.name}</span></div>`;
 }
 
 // 牌阵开始: 清空收集 + 建好空槽位
@@ -636,12 +731,13 @@ function finishSpread(){
   toast(SPREADS[spreadK].name+' · 牌阵已成');
   busy=false; manualMode=false; spreadActive=false; drawPill.disabled=false; shufflePill.disabled=false;
   phase='done'; revealed=true; scene.classList.add('dim');
-  stageHint.textContent= running ? '🖐 张开手掌 · 重启一卦' : '点「叩问命运」· 再卜一卦';
+  stageHint.textContent='牌阵已成 · 可阅读牌义或请求 AI 深度解读';
 }
 
 // 重置回可选牌状态(清空牌阵)
 function resetRound(){
   revealed=false; fistLatch=false; manualMode=false; manualVel=0; spreadActive=false; collected=[];
+  aiRequestedForRound=false;
   hideReading(); revealEl.innerHTML=''; scene.classList.remove('dim');
   aiAction.classList.remove('show'); aiReading.classList.remove('show','loading'); aiReadingBody.textContent='';
   const box=document.getElementById('slots'); box.classList.remove('show'); box.innerHTML='';
@@ -684,7 +780,7 @@ function showReading(cards, slots){
   readingEl.innerHTML=cards.map((c,i)=>{
     const rev=c.reversed, mean=rev?c.rev:c.up, suit=c.arcana==='major'?'大阿尔卡那':c.suit;
     return `<div class="row">
-      <div class="ic ${rev?'rev':''}">${c.emoji}</div>
+      <img class="ic ${rev?'rev':''}" src="${c.image}" alt="${c.name}">
       <div>
         <div class="slot">${slots[i]?slots[i]+' · ':''}${suit}</div>
         <div class="title">${c.name}<small>${c.en}</small>
@@ -696,8 +792,73 @@ function showReading(cards, slots){
 }
 function hideReading(){readingEl.classList.remove('show');}
 
+/* ============ 问题 → 牌阵 → 仪式洗牌 ============ */
+let ritualStep=1, ritualReady=false, holdStart=0, holdFrame=0;
+function showRitualStep(step){
+  ritualStep=step;
+  ritualFlow.querySelectorAll('.ritual-panel').forEach(el=>el.classList.toggle('active',+el.dataset.step===step));
+  ritualFlow.querySelectorAll('.ritual-dot').forEach(el=>el.classList.toggle('active',+el.dataset.dot<=step));
+  const guides={
+    1:'✌ 胜利手势：跳过问题，进入牌阵选择',
+    2:'🖐 左右移动选择牌阵 · ✊ 握拳确认',
+    3:'✊ 保持握拳完成仪式洗牌'
+  };
+  gestureHud.textContent=guides[step];
+}
+function updateQuestionReady(){
+  questionCount.textContent=`${questionInput.value.length} / 300`;
+  questionNext.disabled=!(questionInput.value.trim()||openExploration.checked);
+}
+questionNext.addEventListener('click',()=>showRitualStep(2));
+openExploration.addEventListener('change',updateQuestionReady);
+questionInput.addEventListener('input',updateQuestionReady);
+document.querySelectorAll('.spread-choice').forEach(btn=>btn.addEventListener('click',()=>{
+  const k=+btn.dataset.spread;
+  setSpread(k);
+  document.querySelectorAll('.spread-choice').forEach(x=>x.classList.toggle('selected',x===btn));
+  document.getElementById('ritualPrompt').textContent=`${SPREADS[k].name} · ${SPREADS[k].cnt} 张。深呼吸，默念你的问题，按住按钮完成洗牌。`;
+  setTimeout(()=>showRitualStep(3),260);
+}));
+function cancelHold(){
+  holdStart=0; cancelAnimationFrame(holdFrame); holdFill.style.width='0%';
+}
+function finishRitual(){
+  if(ritualReady)return;
+  ritualReady=true; cancelHold();
+  vel=18; phase='spin';
+  onLanded=()=>{
+    phase='idle';
+    ritualFlow.classList.add('done');
+    stage.classList.remove('flow-locked');
+    mainActions.classList.add('ready');
+    document.getElementById('ritualSummaryText').textContent=`${SPREADS[spreadK].name} · 问题已封存 · 请选择你的牌`;
+    stageHint.textContent='轻触卡牌自动抽取 · 或开启摄像头用手势选牌';
+    gestureHud.textContent='🖐 左右移动选牌 · ✊ 握拳抓取';
+    toast('✦ 洗牌完成 · 请抽取你的牌 ✦');
+  };
+}
+function trackHold(now){
+  if(!holdStart)return;
+  const progress=Math.min(1,(now-holdStart)/1500);
+  holdFill.style.width=`${progress*100}%`;
+  if(progress>=1)finishRitual(); else holdFrame=requestAnimationFrame(trackHold);
+}
+holdShuffle.addEventListener('pointerdown',e=>{
+  e.preventDefault(); holdShuffle.setPointerCapture?.(e.pointerId);
+  holdStart=performance.now(); holdFrame=requestAnimationFrame(trackHold);
+});
+['pointerup','pointercancel','pointerleave'].forEach(type=>holdShuffle.addEventListener(type,cancelHold));
+document.getElementById('restartFlow').addEventListener('click',()=>{
+  resetRound(); ritualReady=false; ritualFlow.classList.remove('done'); stage.classList.add('flow-locked');
+  mainActions.classList.remove('ready'); questionInput.value=''; openExploration.checked=false;
+  document.querySelectorAll('.spread-choice').forEach(x=>x.classList.remove('selected'));
+  updateQuestionReady(); showRitualStep(1); ritualFlow.scrollIntoView({behavior:'smooth',block:'start'});
+});
+
+let aiRequestedForRound=false;
 async function requestAIReading(){
   if(!collected.length || busy) return;
+  aiRequestedForRound=true;
   const endpoint=document.body.dataset.aiEndpoint||'/api/reading';
   const payload={
     question:questionInput.value.trim(),
@@ -721,6 +882,7 @@ async function requestAIReading(){
     aiReading.classList.remove('loading');
     aiReading.scrollIntoView({behavior:'smooth',block:'start'});
   }catch(error){
+    aiRequestedForRound=false;
     aiReading.classList.remove('loading');
     aiReadingBody.textContent=`暂时无法完成 AI 解读：${error.message}。如果你正在 GitHub Pages 预览，请先把 AI 接口地址指向已部署的 EdgeOne 站点。`;
   }finally{
@@ -822,6 +984,9 @@ async function startCam(){
     lastTs=0; frameErr=0; lastVideoTime=-1;
     running=true; dot.classList.add('on'); statusTxt.textContent='识别中'; startBtn.textContent='关闭摄像头';
     camPill.textContent='🎥 手势已开'; diag.textContent='✓ 摄像头已开 · 移动手掌左右滚动选牌 · 握拳抓取 · ✌切牌阵';
+    ritualCamBtn.textContent='✓ 全程手势已开启'; ritualCamBtn.classList.add('on');
+    gestureOnboardText.textContent='摄像头画面仅在本机识别，不会上传';
+    gestureHud.classList.add('show'); showRitualStep(ritualStep);
     stageHint.textContent='🖐 移动手掌选牌 · ✊ 握拳抓取';
     loop();
   }catch(e){
@@ -840,6 +1005,8 @@ function stopCam(){
   const s=video.srcObject; if(s)s.getTracks().forEach(t=>t.stop()); video.srcObject=null;
   chargeEl.classList.remove('show'); fistCount=0;
   const cp=document.getElementById('camPill'); if(cp)cp.textContent='🎥 开启手势';
+  ritualCamBtn.textContent='🎥 开启全程手势'; ritualCamBtn.classList.remove('on');
+  gestureOnboardText.textContent='开启后可全程用手势完成占卜'; gestureHud.classList.remove('show');
   const dg=document.getElementById('diag'); if(dg)dg.textContent='';
 }
 function loop(){
@@ -861,6 +1028,7 @@ function vote(g){ gHist.push(g); if(gHist.length>7)gHist.shift();
   const cnt={}; let best=g,bn=0; for(const x of gHist){cnt[x]=(cnt[x]||0)+1; if(cnt[x]>bn){bn=cnt[x];best=x;}} return best; }
 let smHandX=0.5, smVel=0;        // 手位/速度平滑
 let openHold=0, fistHist=[];      // 张掌保持计数 / 握拳布尔消抖
+let ritualGestureHold=0, resultGestureHold=0, ritualSpreadHover=-1;
 // 几何握拳判定(各指尖比指节更靠近腕=卷曲), 比分类器稳得多
 function isFist(lm){
   const w=lm[0], d=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
@@ -891,20 +1059,69 @@ function handleRes(res){
   if(hasHand){ const lm=res.landmarks[0]; const hx=1-((lm[0].x+lm[9].x)/2); smHandX += (hx-smHandX)*0.4; fist=isFist(lm); }
   fistHist.push(fist?1:0); if(fistHist.length>4) fistHist.shift();
   const fistStable = hasHand && fistHist.reduce((a,b)=>a+b,0)>=3;   // 4帧里≥3帧握拳
-  gnow.textContent = !hasHand?'—':(fistStable?'握拳 ✊':'手掌 🖐');
+  gnow.textContent = !hasHand?'—':(fistStable?'握拳 ✊':(g==='Victory'?'胜利 ✌':(g==='Thumb_Up'?'点赞 👍':'手掌 🖐')));
+
+  // 仪式阶段：开启摄像头后可完全免触控
+  if(!ritualReady){
+    if(cooldown>0){cooldown--;return;}
+    if(ritualStep===1){
+      gestureHud.textContent='✌ 保持胜利手势 · 跳过问题并继续';
+      ritualGestureHold=g==='Victory'?ritualGestureHold+1:0;
+      if(ritualGestureHold>=8){
+        openExploration.checked=true; updateQuestionReady(); showRitualStep(2);
+        toast('✌ 已选择开放式探索'); ritualGestureHold=0; cooldown=18;
+      }
+    }else if(ritualStep===2){
+      if(hasHand){
+        ritualSpreadHover=smHandX<.34?0:(smHandX<.67?1:2);
+        const choices=[...document.querySelectorAll('.spread-choice')];
+        choices.forEach((el,i)=>el.classList.toggle('selected',i===ritualSpreadHover));
+        gestureHud.textContent=`🖐 已指向 ${['圣示牌 · 1张','时间之流 · 3张','十字牌阵 · 5张'][ritualSpreadHover]} · ✊ 握拳确认`;
+        ritualGestureHold=fistStable?ritualGestureHold+1:0;
+        if(ritualGestureHold>=FIST_NEED){
+          choices[ritualSpreadHover].click(); ritualGestureHold=0; cooldown=18;
+        }
+      }else ritualGestureHold=0;
+    }else if(ritualStep===3){
+      ritualGestureHold=fistStable?ritualGestureHold+1:0;
+      const progress=Math.min(100,ritualGestureHold/26*100);
+      holdFill.style.width=`${progress}%`;
+      gestureHud.textContent=`✊ 保持握拳完成洗牌 · ${Math.round(progress)}%`;
+      if(ritualGestureHold>=26){
+        finishRitual(); ritualGestureHold=0; cooldown=20;
+      }
+      if(!fistStable)holdFill.style.width='0%';
+    }
+    return;
+  }
 
   if(cooldown>0){cooldown--; return;}
 
   // ✌ 切牌阵(仅非握拳时)
-  if(!fistStable && g==='Victory'&&!busy){ if(!vLock){vLock=true; const seq={1:3,3:5,5:1}; setSpread(seq[spreadK]); cooldown=22;} }
+  if(!revealed && !fistStable && g==='Victory'&&!busy){ if(!vLock){vLock=true; const seq={1:3,3:5,5:1}; setSpread(seq[spreadK]); cooldown=22;} }
   else if(fistStable||g!=='Victory') vLock=false;
 
   if(busy) return;
 
-  // 揭晓定格: 张开手掌(非握拳)保持约0.4s → 重开新一卦(防刚抓完误触)
+  // 揭晓后保持牌面与 AI 按钮，直到用户主动洗牌或重新开始仪式
   if(revealed){
-    if(!fistStable){ if(++openHold>10){ resetRound(); toast('🖐 重新开始'); cooldown=16; openHold=0; } }
-    else openHold=0;
+    if(g==='Thumb_Up'){
+      resultGestureHold++;
+      gestureHud.textContent=`👍 保持点赞请求 AI 深度解读 · ${Math.min(100,Math.round(resultGestureHold/9*100))}%`;
+      if(resultGestureHold>=9 && !aiReadingBtn.disabled && !aiRequestedForRound){
+        resultGestureHold=0; cooldown=24; requestAIReading();
+      }
+    }else if(g==='Victory'){
+      resultGestureHold++;
+      gestureHud.textContent=`✌ 保持胜利手势重新开始 · ${Math.min(100,Math.round(resultGestureHold/12*100))}%`;
+      if(resultGestureHold>=12){
+        resultGestureHold=0; cooldown=24; document.getElementById('restartFlow').click();
+      }
+    }else{
+      resultGestureHold=0;
+      gestureHud.textContent='👍 点赞：AI 深度解读 · ✌ 胜利手势：重新开始';
+    }
+    openHold=0;
     return;
   }
 
@@ -937,7 +1154,7 @@ const camPill=document.getElementById('camPill');
 drawPill.addEventListener('click',doDraw);
 shufflePill.addEventListener('click',shuffle);
 aiReadingBtn.addEventListener('click',requestAIReading);
-questionInput.addEventListener('input',()=>{questionCount.textContent=`${questionInput.value.length} / 300`;});
+ritualCamBtn.addEventListener('click',()=>running?stopCam():startCam());
 camPill.addEventListener('click',()=>running?stopCam():startCam());
 startBtn.addEventListener('click',()=>running?stopCam():startCam());
 const camW=document.getElementById('camWidget'),camToggle=document.getElementById('camToggle');
