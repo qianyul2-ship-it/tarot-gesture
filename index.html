@@ -946,6 +946,7 @@ async function requestAIReading(){
   aiReadingBtn.disabled=true;
   aiReading.classList.add('show','loading');
   aiReadingBody.textContent='正在聆听牌与牌之间的回响…';
+  requestAnimationFrame(()=>aiReading.scrollIntoView({behavior:'smooth',block:'start'}));
   try{
     const response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     let result={}; try{result=await response.json();}catch(e){}
