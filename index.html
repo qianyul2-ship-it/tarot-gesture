@@ -147,9 +147,9 @@
   .pill:disabled{opacity:.4;cursor:not-allowed;transform:none}
 
   /* ===== 三步仪式引导 ===== */
-  .ritual-flow{width:min(94vw,760px);margin:18px auto 4px;padding:20px;border-radius:18px;
-    background:rgba(255,246,251,.82);border:1px solid rgba(232,92,151,.25);
-    box-shadow:0 14px 38px rgba(214,90,150,.18);backdrop-filter:blur(14px)}
+  .ritual-flow{position:relative;z-index:8;width:min(88vw,620px);margin:10px auto -54px;padding:15px 18px;border-radius:18px;
+    background:rgba(255,246,251,.46);border:1px solid rgba(232,92,151,.2);
+    box-shadow:0 10px 28px rgba(214,90,150,.11);backdrop-filter:none}
   .ritual-flow.done{padding:11px 16px}
   .ritual-flow.done .ritual-stepper,.ritual-flow.done .ritual-panel{display:none}
   .ritual-summary{display:none;align-items:center;justify-content:space-between;gap:14px;color:var(--ink-dim);font-size:12px}
@@ -182,9 +182,13 @@
     color:#fff;background:linear-gradient(135deg,#e96da8,#b76ec7);font-family:inherit;letter-spacing:2px;touch-action:none}
   .hold-fill{position:absolute;inset:0 auto 0 0;width:0;background:linear-gradient(90deg,rgba(255,255,255,.08),rgba(255,225,241,.45));transition:width .08s linear}
   .hold-label{position:relative;z-index:1}
-  .stage.flow-locked{opacity:.28;filter:blur(3px);pointer-events:none;max-height:270px}
+  .stage.flow-locked{opacity:1;filter:none;pointer-events:none;max-height:none}
   .stage{transition:opacity .6s,filter .6s,max-height .6s}
   .restart-flow{border:0;background:none;color:var(--gold);cursor:pointer;font-family:inherit;font-size:11px}
+  .global-reset{position:fixed;top:14px;right:14px;z-index:24;cursor:pointer;padding:8px 15px;border-radius:22px;
+    color:#d24d8d;background:rgba(255,246,251,.78);border:1px solid var(--gold-dim);font-family:inherit;font-size:11px;
+    box-shadow:0 4px 16px rgba(214,90,150,.2);transition:.25s}
+  .global-reset:hover{transform:translateY(-1px);background:rgba(255,246,251,.96);box-shadow:0 7px 22px rgba(214,90,150,.28)}
   .gesture-onboard{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:0 0 16px;
     padding:9px 12px;border-radius:12px;background:rgba(255,255,255,.55);border:1px dashed rgba(232,92,151,.28);
     color:var(--ink-dim);font-size:11px}
@@ -232,7 +236,7 @@
   footer{position:relative;z-index:3;text-align:center;color:var(--ink-dim);font-size:11px;margin-top:auto;padding-top:26px;line-height:1.9;opacity:.75}
 
   /* 右上角牌阵选择器(默认半隐形, 悬停/点击展开) */
-  .spreads{position:fixed;top:14px;right:14px;z-index:21;width:auto;max-width:54px;
+  .spreads{position:fixed;top:58px;right:14px;z-index:21;width:auto;max-width:54px;
     background:rgba(12,10,22,.30);border:1px solid rgba(224,183,58,.10);border-radius:10px;padding:8px 11px;
     backdrop-filter:blur(7px);box-shadow:none;opacity:.3;overflow:hidden;
     transition:opacity .35s,max-width .4s,background .35s,box-shadow .35s,border-color .35s}
@@ -385,6 +389,19 @@
   .ai-reading.loading{opacity:.75}
   .ai-reading .ai-body{white-space:pre-wrap;font-size:14px}
   .ai-reading .ai-note{margin-top:13px;padding-top:11px;border-top:1px solid var(--line);font-size:10px;color:var(--ink-dim)}
+  .followup-box{display:none;width:min(94vw,720px);margin:14px auto 0;padding:18px;border-radius:16px;
+    background:rgba(255,246,251,.78);border:1px solid var(--line);box-shadow:0 10px 28px rgba(214,90,150,.14)}
+  .followup-box.show{display:block;animation:fadeup .5s both}
+  .followup-head{display:flex;align-items:center;justify-content:space-between;color:var(--gold);font-size:12px;letter-spacing:1px}
+  .followup-thread{display:grid;gap:10px;margin:12px 0}
+  .followup-item{padding:11px 13px;border-radius:12px;background:rgba(255,255,255,.62);color:var(--ink);font-size:13px;line-height:1.8}
+  .followup-item strong{display:block;color:#d24d8d;margin-bottom:5px}
+  .followup-answer{white-space:pre-wrap}
+  .followup-controls textarea{display:block;width:100%;min-height:68px;resize:vertical;padding:11px 13px;border-radius:12px;
+    color:var(--ink);background:rgba(255,255,255,.72);border:1px solid rgba(232,92,151,.24);font:13px/1.8 inherit;outline:none}
+  .followup-controls textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(232,92,151,.08)}
+  .followup-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:9px;color:var(--ink-dim);font-size:10px}
+  .followup-actions .pill{padding:9px 18px;font-size:11px}
   body[data-theme="sakura"] .question-card,
   body[data-theme="sakura"] .ai-reading{background:rgba(255,246,251,.86);box-shadow:0 12px 32px rgba(214,90,150,.16)}
   body[data-theme="sakura"] .question-card textarea{background:rgba(255,255,255,.7);border-color:rgba(232,92,151,.22)}
@@ -394,9 +411,10 @@
     .cam{width:150px} .cback{width:108px;height:174px;left:-54px;top:-87px}
     .cback .sig{font-size:31px}
     .stage{height:50vh}
-    .spreads{width:158px;top:10px;right:10px;padding:8px 9px}
+    .global-reset{top:10px;right:10px;padding:7px 11px;font-size:10px}
+    .spreads{width:158px;top:52px;right:10px;padding:8px 9px}
     .sp{padding:6px 8px} .sp-name{font-size:12px}
-    .ritual-flow{padding:16px 13px}.spread-choices{grid-template-columns:1fr}.spread-choice{text-align:center}
+    .ritual-flow{width:92vw;margin-bottom:-42px;padding:13px}.spread-choices{grid-template-columns:1fr}.spread-choice{text-align:center}
   }
 </style>
 </head>
@@ -407,6 +425,7 @@
 <div class="grain"></div>
 <div class="toast" id="toast"></div>
 <button class="theme-toggle" id="themeToggle">🌙 幽冥风</button>
+<button class="global-reset" id="globalReset">↻ 重新抽卡</button>
 
 <div class="wrap">
   <header>
@@ -479,6 +498,14 @@
     <div class="ai-body" id="aiReadingBody"></div>
     <div class="ai-note">AI 解读仅供娱乐与自我反思，不替代医疗、法律、心理或投资等专业建议。</div>
   </section>
+  <section class="followup-box" id="followupBox">
+    <div class="followup-head"><span>✦ 继续追问</span><span id="followupCount">0 / 3</span></div>
+    <div class="followup-thread" id="followupThread"></div>
+    <div class="followup-controls">
+      <textarea id="followupInput" maxlength="200" placeholder="可以继续问这组牌，例如：我现在最该先做什么？"></textarea>
+      <div class="followup-actions"><span id="followupHint">输入后点击按钮提交</span><button class="pill" id="followupSend">提交追问</button></div>
+    </div>
+  </section>
   <div id="diag" style="text-align:center;font-size:12px;color:var(--ink-dim);margin-top:12px;min-height:16px;letter-spacing:.5px"></div>
 </div>
 
@@ -497,7 +524,7 @@
 <div class="gesture-hud" id="gestureHud" aria-live="polite">✌ 跳过问题并继续</div>
 
 <footer>
-  🖐 移动手掌滚动选牌 · ✊ 握拳抓取 · ✌ 切换牌阵　|　MediaPipe 本地识别 · 摄像头画面不上传<br>
+  🖐 移动手掌滚动选牌 · ✊ 握拳抓取 · 🤘 切换牌阵 · ✌ 重新抽卡　|　MediaPipe 本地识别<br>
   Tarot · Sakura × DeepSeek AI · 仅供娱乐与自我反思 ✦
 </footer>
 
@@ -571,6 +598,13 @@ const mainActions=document.getElementById('mainActions');
 const ritualCamBtn=document.getElementById('ritualCamBtn');
 const gestureHud=document.getElementById('gestureHud');
 const gestureOnboardText=document.getElementById('gestureOnboardText');
+const followupBox=document.getElementById('followupBox');
+const followupThread=document.getElementById('followupThread');
+const followupInput=document.getElementById('followupInput');
+const followupSend=document.getElementById('followupSend');
+const followupCount=document.getElementById('followupCount');
+const followupHint=document.getElementById('followupHint');
+let initialReadingText='', followUps=[];
 
 const N=20, STEP=360/N;          // 20张牌圆柱, 正前显示约7张
 let R=420, spin=0, vel=0;
@@ -740,6 +774,9 @@ function resetRound(){
   aiRequestedForRound=false;
   hideReading(); revealEl.innerHTML=''; scene.classList.remove('dim');
   aiAction.classList.remove('show'); aiReading.classList.remove('show','loading'); aiReadingBody.textContent='';
+  initialReadingText=''; followUps=[]; followupBox.classList.remove('show'); followupThread.innerHTML='';
+  followupInput.value=''; followupInput.disabled=false; followupSend.disabled=false; followupCount.textContent='0 / 3';
+  followupHint.textContent='输入后点击按钮提交';
   const box=document.getElementById('slots'); box.classList.remove('show'); box.innerHTML='';
   phase='idle';
   stageHint.textContent= running ? '🖐 移动手掌选牌 · ✊ 握拳抓取' : '轻触卡牌 · 或开启摄像头以手势叩问命运';
@@ -800,7 +837,7 @@ function showRitualStep(step){
   ritualFlow.querySelectorAll('.ritual-dot').forEach(el=>el.classList.toggle('active',+el.dataset.dot<=step));
   const guides={
     1:'✌ 胜利手势：跳过问题，进入牌阵选择',
-    2:'🖐 左右移动选择牌阵 · ✊ 握拳确认',
+    2:'🤘 切换牌阵 · ✊ 握拳确认',
     3:'✊ 保持握拳完成仪式洗牌'
   };
   gestureHud.textContent=guides[step];
@@ -848,12 +885,14 @@ holdShuffle.addEventListener('pointerdown',e=>{
   holdStart=performance.now(); holdFrame=requestAnimationFrame(trackHold);
 });
 ['pointerup','pointercancel','pointerleave'].forEach(type=>holdShuffle.addEventListener(type,cancelHold));
-document.getElementById('restartFlow').addEventListener('click',()=>{
+function restartEntireFlow(){
   resetRound(); ritualReady=false; ritualFlow.classList.remove('done'); stage.classList.add('flow-locked');
   mainActions.classList.remove('ready'); questionInput.value=''; openExploration.checked=false;
   document.querySelectorAll('.spread-choice').forEach(x=>x.classList.remove('selected'));
   updateQuestionReady(); showRitualStep(1); ritualFlow.scrollIntoView({behavior:'smooth',block:'start'});
-});
+}
+document.getElementById('restartFlow').addEventListener('click',restartEntireFlow);
+document.getElementById('globalReset').addEventListener('click',restartEntireFlow);
 
 let aiRequestedForRound=false;
 async function requestAIReading(){
@@ -879,6 +918,8 @@ async function requestAIReading(){
     let result={}; try{result=await response.json();}catch(e){}
     if(!response.ok) throw new Error(result.error||'AI 服务暂时不可用');
     aiReadingBody.textContent=result.reading||'牌面保持了沉默，请稍后重试。';
+    initialReadingText=result.reading||'';
+    if(initialReadingText) followupBox.classList.add('show');
     aiReading.classList.remove('loading');
     aiReading.scrollIntoView({behavior:'smooth',block:'start'});
   }catch(error){
@@ -887,6 +928,46 @@ async function requestAIReading(){
     aiReadingBody.textContent=`暂时无法完成 AI 解读：${error.message}。如果你正在 GitHub Pages 预览，请先把 AI 接口地址指向已部署的 EdgeOne 站点。`;
   }finally{
     aiReadingBtn.disabled=false;
+  }
+}
+
+function cardPayload(){
+  return collected.map((card,index)=>({
+    position:SPREADS[spreadK].slots[index], name:card.name, englishName:card.en,
+    orientation:card.reversed?'逆位':'正位', meaning:card.reversed?card.rev:card.up
+  }));
+}
+function renderFollowUps(){
+  followupThread.innerHTML='';
+  followUps.forEach((item,index)=>{
+    const box=document.createElement('div'); box.className='followup-item';
+    const q=document.createElement('strong'); q.textContent=`追问 ${index+1}：${item.question}`;
+    const a=document.createElement('div'); a.className='followup-answer'; a.textContent=item.answer;
+    box.append(q,a); followupThread.appendChild(box);
+  });
+  followupCount.textContent=`${followUps.length} / 3`;
+  const ended=followUps.length>=3;
+  followupInput.disabled=ended; followupSend.disabled=ended;
+  followupHint.textContent=ended?'本轮 3 次追问已完成，可以重新抽卡开启新一轮':'输入后点击按钮提交';
+}
+async function requestFollowUp(){
+  const followUp=followupInput.value.trim();
+  if(!initialReadingText || !followUp || followUps.length>=3 || followupSend.disabled) return;
+  followupSend.disabled=true; followupInput.disabled=true; followupHint.textContent='正在结合本轮牌面继续解读…';
+  try{
+    const response=await fetch(document.body.dataset.aiEndpoint||'/api/reading',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({mode:'followup',question:questionInput.value.trim(),spread:SPREADS[spreadK].name,
+        cards:cardPayload(),initialReading:initialReadingText,history:followUps,followUp})
+    });
+    let result={}; try{result=await response.json();}catch(e){}
+    if(!response.ok) throw new Error(result.error||'AI 服务暂时不可用');
+    followUps.push({question:followUp,answer:result.reading||'牌面暂时没有给出更多回应。'});
+    followupInput.value=''; renderFollowUps();
+    followupThread.lastElementChild?.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }catch(error){
+    followupHint.textContent=`追问失败：${error.message}`;
+    followupInput.disabled=false; followupSend.disabled=false;
   }
 }
 
@@ -941,7 +1022,7 @@ let missTol=0;                                // 握拳闪断容错
 let cooldown=0, vLock=false;
 let gHist=[];                                 // 多帧投票
 const MIN_SCORE=0.45;
-const GES_CN={Open_Palm:'张掌 🖐',Closed_Fist:'握拳 ✊',Victory:'胜利 ✌',Pointing_Up:'指上 ☝',Thumb_Up:'赞 👍',Thumb_Down:'踩 👎',ILoveYou:'🤟',None:'—'};
+const GES_CN={Open_Palm:'张掌 🖐',Closed_Fist:'握拳 ✊',Victory:'胜利 ✌',Pointing_Up:'指上 ☝',Thumb_Up:'赞 👍',Thumb_Down:'踩 👎',ILoveYou:'切换 🤘',None:'—'};
 
 async function loadMP(){
   statusTxt.textContent='加载模型…';
@@ -1059,7 +1140,7 @@ function handleRes(res){
   if(hasHand){ const lm=res.landmarks[0]; const hx=1-((lm[0].x+lm[9].x)/2); smHandX += (hx-smHandX)*0.4; fist=isFist(lm); }
   fistHist.push(fist?1:0); if(fistHist.length>4) fistHist.shift();
   const fistStable = hasHand && fistHist.reduce((a,b)=>a+b,0)>=3;   // 4帧里≥3帧握拳
-  gnow.textContent = !hasHand?'—':(fistStable?'握拳 ✊':(g==='Victory'?'胜利 ✌':(g==='Thumb_Up'?'点赞 👍':'手掌 🖐')));
+  gnow.textContent = !hasHand?'—':(fistStable?'握拳 ✊':(g==='Victory'?'胜利 ✌':(g==='Thumb_Up'?'点赞 👍':(g==='ILoveYou'?'切换 🤘':'手掌 🖐'))));
 
   // 仪式阶段：开启摄像头后可完全免触控
   if(!ritualReady){
@@ -1073,10 +1154,13 @@ function handleRes(res){
       }
     }else if(ritualStep===2){
       if(hasHand){
-        ritualSpreadHover=smHandX<.34?0:(smHandX<.67?1:2);
+        if(ritualSpreadHover<0) ritualSpreadHover=0;
+        if(g==='ILoveYou' && !vLock){
+          ritualSpreadHover=(ritualSpreadHover+1)%3; vLock=true; cooldown=10;
+        }else if(g!=='ILoveYou') vLock=false;
         const choices=[...document.querySelectorAll('.spread-choice')];
         choices.forEach((el,i)=>el.classList.toggle('selected',i===ritualSpreadHover));
-        gestureHud.textContent=`🖐 已指向 ${['圣示牌 · 1张','时间之流 · 3张','十字牌阵 · 5张'][ritualSpreadHover]} · ✊ 握拳确认`;
+        gestureHud.textContent=`🤘 切换 · 当前 ${['圣示牌 · 1张','时间之流 · 3张','十字牌阵 · 5张'][ritualSpreadHover]} · ✊ 握拳确认`;
         ritualGestureHold=fistStable?ritualGestureHold+1:0;
         if(ritualGestureHold>=FIST_NEED){
           choices[ritualSpreadHover].click(); ritualGestureHold=0; cooldown=18;
@@ -1097,9 +1181,9 @@ function handleRes(res){
 
   if(cooldown>0){cooldown--; return;}
 
-  // ✌ 切牌阵(仅非握拳时)
-  if(!revealed && !fistStable && g==='Victory'&&!busy){ if(!vLock){vLock=true; const seq={1:3,3:5,5:1}; setSpread(seq[spreadK]); cooldown=22;} }
-  else if(fistStable||g!=='Victory') vLock=false;
+  // 🤘 切牌阵(模型标签 ILoveYou，仅非握拳时)
+  if(!revealed && !fistStable && g==='ILoveYou'&&!busy){ if(!vLock){vLock=true; const seq={1:3,3:5,5:1}; setSpread(seq[spreadK]); cooldown=22;} }
+  else if(fistStable||g!=='ILoveYou') vLock=false;
 
   if(busy) return;
 
@@ -1108,8 +1192,9 @@ function handleRes(res){
     if(g==='Thumb_Up'){
       resultGestureHold++;
       gestureHud.textContent=`👍 保持点赞请求 AI 深度解读 · ${Math.min(100,Math.round(resultGestureHold/9*100))}%`;
-      if(resultGestureHold>=9 && !aiReadingBtn.disabled && !aiRequestedForRound){
-        resultGestureHold=0; cooldown=24; requestAIReading();
+      if(resultGestureHold>=9 && !aiReadingBtn.disabled){
+        resultGestureHold=0; cooldown=24;
+        if(!aiRequestedForRound) requestAIReading();
       }
     }else if(g==='Victory'){
       resultGestureHold++;
@@ -1119,7 +1204,7 @@ function handleRes(res){
       }
     }else{
       resultGestureHold=0;
-      gestureHud.textContent='👍 点赞：AI 深度解读 · ✌ 胜利手势：重新开始';
+      gestureHud.textContent=initialReadingText?'追问请点击按钮提交 · ✌ 胜利：重新抽卡':'👍 点赞：AI 深度解读 · ✌ 胜利：重新抽卡';
     }
     openHold=0;
     return;
@@ -1154,6 +1239,7 @@ const camPill=document.getElementById('camPill');
 drawPill.addEventListener('click',doDraw);
 shufflePill.addEventListener('click',shuffle);
 aiReadingBtn.addEventListener('click',requestAIReading);
+followupSend.addEventListener('click',requestFollowUp);
 ritualCamBtn.addEventListener('click',()=>running?stopCam():startCam());
 camPill.addEventListener('click',()=>running?stopCam():startCam());
 startBtn.addEventListener('click',()=>running?stopCam():startCam());
