@@ -955,7 +955,7 @@ async function requestAIReading(){
     initialReadingText=result.reading||'';
     if(initialReadingText) followupBox.classList.add('show');
     aiReading.classList.remove('loading');
-    aiReading.scrollIntoView({behavior:'smooth',block:'start'});
+    requestAnimationFrame(()=>aiReading.scrollIntoView({behavior:'smooth',block:'start'}));
   }catch(error){
     aiRequestedForRound=false;
     aiReading.classList.remove('loading');
