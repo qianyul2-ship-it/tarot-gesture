@@ -56,7 +56,7 @@
 
   /* ===== 横向 3D 转盘 ===== */
   .stage{position:relative;width:100%;max-width:860px;height:min(58vh,440px);margin:14px auto 0}
-  .scene{position:absolute;inset:0;perspective:1300px;perspective-origin:50% 46%;transition:opacity .6s,filter .6s}
+  .scene{position:absolute;inset:0;perspective:2100px;perspective-origin:50% 46%;transition:opacity .6s,filter .6s}
   .scene.dim{opacity:.12;filter:blur(3px)}
   .glow-core{position:absolute;left:50%;top:46%;width:240px;height:240px;transform:translate(-50%,-50%);
     border-radius:50%;pointer-events:none;
@@ -232,7 +232,12 @@
     opacity:0;pointer-events:none;transition:.3s}
   .toast.show{opacity:1}
 
-  footer{position:relative;z-index:3;text-align:center;color:var(--ink-dim);font-size:11px;margin-top:auto;padding-top:26px;line-height:1.9;opacity:.75}
+  footer{position:relative;z-index:3;text-align:center;color:var(--ink-dim);font-size:11px;margin-top:auto;padding-top:26px;line-height:1.9}
+  .footer-gesture-guide{display:flex;justify-content:center;flex-wrap:wrap;gap:0;margin:0 auto 3px;max-width:900px;
+    color:var(--ink-dim);font-size:10px;opacity:.58}
+  .footer-gesture-guide span{white-space:nowrap}
+  .footer-gesture-guide span:not(:last-child)::after{content:" · ";margin:0 5px;color:var(--gold-dim)}
+  .footer-note{font-size:10px;opacity:.46}
 
   /* 右上角牌阵选择器(默认半隐形, 悬停/点击展开) */
   .spreads{display:none;position:fixed;top:58px;right:14px;z-index:21;width:auto;max-width:54px;
@@ -534,8 +539,15 @@
 <div class="gesture-hud" id="gestureHud" aria-live="polite">✌ 跳过问题并继续</div>
 
 <footer>
-  🖐 移动手掌滚动选牌 · ✊ 握拳抓取 · 🤘 切换牌阵 · ✌ 重新抽卡　|　MediaPipe 本地识别<br>
-  Tarot · Sakura × DeepSeek AI · 仅供娱乐与自我反思 ✦
+  <div class="footer-gesture-guide" aria-label="手势操作指南">
+    <span>问题　✌ 跳过</span>
+    <span>选牌阵　🖐 左右选择 · ✊ 确认</span>
+    <span>抽牌　🖐 移动 · ✊ 抓取</span>
+    <span>结果　👍 AI 深度解读</span>
+    <span>任意阶段　↻ 右上角重新抽卡</span>
+    <span>追问　点击按钮（最多 3 次）</span>
+  </div>
+  <div class="footer-note">MediaPipe 本地识别 · 摄像头画面不上传　|　Tarot · Sakura × DeepSeek AI · 仅供娱乐与自我反思 ✦</div>
 </footer>
 
 <script src="tarot-data.js"></script>
@@ -616,7 +628,7 @@ const followupCount=document.getElementById('followupCount');
 const followupHint=document.getElementById('followupHint');
 let initialReadingText='', followUps=[];
 
-const N=20, STEP=360/N;          // 20张牌圆柱, 正前显示约7张
+const N=28, STEP=360/N;          // 宽幅牌流：更多卡背延伸到屏幕两侧
 let R=420, spin=0, vel=0;
 const IDLE=0.07, FRICTION=0.974;
 let phase='idle';           // idle | spin | snap | reveal | done
@@ -643,7 +655,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function calcR(){
   const w=Math.min(stage.clientWidth,860);
   const cw=w<480?108:136;
-  R=Math.max(330, cw/(2*Math.tan(Math.PI/N))*1.16);
+  R=Math.max(520, cw/(2*Math.tan(Math.PI/N))*1.32);
 }
 let backs=[];
 function buildCarousel(){
@@ -660,7 +672,7 @@ function buildCarousel(){
   }
 }
 function depth(){
-  const span=3.5*STEP;     // 显示中心+左右各3张=7张
+  const span=6.5*STEP;     // 中心两侧各显示约6张，边缘自然延伸到屏幕外
   for(let i=0;i<backs.length;i++){
     let net=((i*STEP+spin)%360+360)%360; if(net>180)net-=360;
     const ab=Math.abs(net);
@@ -847,7 +859,7 @@ function showRitualStep(step){
   ritualFlow.querySelectorAll('.ritual-dot').forEach(el=>el.classList.toggle('active',+el.dataset.dot<=step));
   const guides={
     1:'✌ 胜利手势：跳过问题，进入牌阵选择',
-    2:'🤘 切换牌阵 · ✊ 握拳确认',
+    2:'🖐 左右移动手掌切换牌阵 · ✊ 握拳确认',
     3:'✊ 保持握拳完成仪式洗牌'
   };
   gestureHud.textContent=guides[step];
@@ -916,6 +928,7 @@ async function requestAIReading(){
   const payload={
     question:questionInput.value.trim(),
     spread:SPREADS[spreadK].name,
+    theme:document.body.dataset.theme==='sakura'?'sakura':'nocturne',
     cards:collected.map((card,index)=>({
       position:SPREADS[spreadK].slots[index],
       name:card.name,
@@ -972,6 +985,7 @@ async function requestFollowUp(){
     const response=await fetch(document.body.dataset.aiEndpoint||'/api/reading',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({mode:'followup',question:questionInput.value.trim(),spread:SPREADS[spreadK].name,
+        theme:document.body.dataset.theme==='sakura'?'sakura':'nocturne',
         cards:cardPayload(),initialReading:initialReadingText,history:followUps,followUp})
     });
     let result={}; try{result=await response.json();}catch(e){}
@@ -1033,10 +1047,10 @@ const startBtn=document.getElementById('startBtn');
 let recognizer=null, running=false, lastVideoTime=-1, lastTs=0, frameErr=0;
 let fistCount=0; const FIST_NEED=9;          // 约0.45s, 更跟手
 let missTol=0;                                // 握拳闪断容错
-let cooldown=0, vLock=false;
+let cooldown=0;
 let gHist=[];                                 // 多帧投票
 const MIN_SCORE=0.45;
-const GES_CN={Open_Palm:'张掌 🖐',Closed_Fist:'握拳 ✊',Victory:'胜利 ✌',Pointing_Up:'指上 ☝',Thumb_Up:'赞 👍',Thumb_Down:'踩 👎',ILoveYou:'切换 🤘',None:'—'};
+const GES_CN={Open_Palm:'张掌 🖐',Closed_Fist:'握拳 ✊',Victory:'胜利 ✌',Pointing_Up:'指上 ☝',Thumb_Up:'赞 👍',Thumb_Down:'踩 👎',ILoveYou:'🤟',None:'—'};
 
 async function loadMP(){
   statusTxt.textContent='加载模型…';
@@ -1154,7 +1168,7 @@ function handleRes(res){
   if(hasHand){ const lm=res.landmarks[0]; const hx=1-((lm[0].x+lm[9].x)/2); smHandX += (hx-smHandX)*0.4; fist=isFist(lm); }
   fistHist.push(fist?1:0); if(fistHist.length>4) fistHist.shift();
   const fistStable = hasHand && fistHist.reduce((a,b)=>a+b,0)>=3;   // 4帧里≥3帧握拳
-  gnow.textContent = !hasHand?'—':(fistStable?'握拳 ✊':(g==='Victory'?'胜利 ✌':(g==='Thumb_Up'?'点赞 👍':(g==='ILoveYou'?'切换 🤘':'手掌 🖐'))));
+  gnow.textContent = !hasHand?'—':(fistStable?'握拳 ✊':(g==='Victory'?'胜利 ✌':(g==='Thumb_Up'?'点赞 👍':'手掌 🖐')));
 
   // 仪式阶段：开启摄像头后可完全免触控
   if(!ritualReady){
@@ -1169,12 +1183,10 @@ function handleRes(res){
     }else if(ritualStep===2){
       if(hasHand){
         if(ritualSpreadHover<0) ritualSpreadHover=0;
-        if(g==='ILoveYou' && !vLock){
-          ritualSpreadHover=(ritualSpreadHover+1)%3; vLock=true; cooldown=10;
-        }else if(g!=='ILoveYou') vLock=false;
+        if(g==='Open_Palm') ritualSpreadHover=smHandX<.34?0:(smHandX<.67?1:2);
         const choices=[...document.querySelectorAll('.spread-choice')];
         choices.forEach((el,i)=>el.classList.toggle('selected',i===ritualSpreadHover));
-        gestureHud.textContent=`🤘 切换 · 当前 ${['圣示牌 · 1张','时间之流 · 3张','十字牌阵 · 5张'][ritualSpreadHover]} · ✊ 握拳确认`;
+        gestureHud.textContent=`🖐 左右移动切换 · 当前 ${['圣示牌 · 1张','时间之流 · 3张','十字牌阵 · 5张'][ritualSpreadHover]} · ✊ 握拳确认`;
         ritualGestureHold=fistStable?ritualGestureHold+1:0;
         if(ritualGestureHold>=FIST_NEED){
           choices[ritualSpreadHover].click(); ritualGestureHold=0; cooldown=18;
@@ -1194,10 +1206,6 @@ function handleRes(res){
   }
 
   if(cooldown>0){cooldown--; return;}
-
-  // 🤘 切牌阵(模型标签 ILoveYou，仅非握拳时)
-  if(!revealed && !fistStable && g==='ILoveYou'&&!busy){ if(!vLock){vLock=true; const seq={1:3,3:5,5:1}; setSpread(seq[spreadK]); cooldown=22;} }
-  else if(fistStable||g!=='ILoveYou') vLock=false;
 
   if(busy) return;
 
