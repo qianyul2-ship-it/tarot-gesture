@@ -555,6 +555,14 @@
     <div class="ai-body" id="aiReadingBody"></div>
     <div class="ai-note">AI 解读仅供娱乐与自我反思，不替代医疗、法律、心理或投资等专业建议。</div>
   </section>
+  <section class="followup-box" id="followupBox">
+    <div class="followup-head"><span>✦ 继续追问</span><span id="followupCount">0 / 3</span></div>
+    <div class="followup-thread" id="followupThread"></div>
+    <div class="followup-controls">
+      <textarea id="followupInput" maxlength="200" placeholder="可以继续问这组牌，例如：我现在最该先做什么？"></textarea>
+      <div class="followup-actions"><span id="followupHint">输入后点击按钮提交</span><button class="pill" id="followupSend">提交追问</button></div>
+    </div>
+  </section>
   <div class="cocktail-action" id="cocktailAction">
     <button class="pill ghost" id="cocktailBtn">✦ 将牌意调成一杯特饮</button>
   </div>
@@ -575,14 +583,6 @@
       <div class="recipe-text" id="recipeText"></div>
       <div class="drink-message" id="drinkMessage"></div>
       <div class="drink-note">特饮仅为创意灵感。未成年人、孕期、驾驶前及不适合饮酒者请选择无酒精版。</div>
-    </div>
-  </section>
-  <section class="followup-box" id="followupBox">
-    <div class="followup-head"><span>✦ 继续追问</span><span id="followupCount">0 / 3</span></div>
-    <div class="followup-thread" id="followupThread"></div>
-    <div class="followup-controls">
-      <textarea id="followupInput" maxlength="200" placeholder="可以继续问这组牌，例如：我现在最该先做什么？"></textarea>
-      <div class="followup-actions"><span id="followupHint">输入后点击按钮提交</span><button class="pill" id="followupSend">提交追问</button></div>
     </div>
   </section>
   <div id="diag" style="text-align:center;font-size:12px;color:var(--ink-dim);margin-top:12px;min-height:16px;letter-spacing:.5px"></div>
@@ -608,6 +608,7 @@
     <span>选牌阵　🖐 左右选择 · ✊ 确认</span>
     <span>抽牌　🖐 移动 · ✊ 抓取</span>
     <span>结果　👍 AI 深度解读</span>
+    <span>结果页　🖐 上下移动滚动屏幕 · ☝️ 生成牌意特调</span>
     <span>任意阶段　↻ 右上角重新抽卡</span>
     <span>追问　点击按钮（最多 3 次）</span>
   </div>
@@ -1306,7 +1307,7 @@ function loop(){
 }
 function vote(g){ gHist.push(g); if(gHist.length>7)gHist.shift();
   const cnt={}; let best=g,bn=0; for(const x of gHist){cnt[x]=(cnt[x]||0)+1; if(cnt[x]>bn){bn=cnt[x];best=x;}} return best; }
-let smHandX=0.5, smVel=0;        // 手位/速度平滑
+let smHandX=0.5, smHandY=0.5, smVel=0;        // 手位/速度平滑
 let openHold=0, fistHist=[];      // 张掌保持计数 / 握拳布尔消抖
 let ritualGestureHold=0, resultGestureHold=0, ritualSpreadHover=-1;
 // 几何握拳判定(各指尖比指节更靠近腕=卷曲), 比分类器稳得多
@@ -1336,10 +1337,10 @@ function handleRes(res){
   // 手位 + 几何握拳(布尔4帧消抖)
   const hasHand = res.landmarks && res.landmarks.length>0;
   let fist=false;
-  if(hasHand){ const lm=res.landmarks[0]; const hx=1-((lm[0].x+lm[9].x)/2); smHandX += (hx-smHandX)*0.4; fist=isFist(lm); }
+  if(hasHand){ const lm=res.landmarks[0]; const hx=1-((lm[0].x+lm[9].x)/2), hy=(lm[0].y+lm[9].y)/2; smHandX += (hx-smHandX)*0.4; smHandY += (hy-smHandY)*0.34; fist=isFist(lm); }
   fistHist.push(fist?1:0); if(fistHist.length>4) fistHist.shift();
   const fistStable = hasHand && fistHist.reduce((a,b)=>a+b,0)>=3;   // 4帧里≥3帧握拳
-  gnow.textContent = !hasHand?'—':(fistStable?'握拳 ✊':(g==='Victory'?'胜利 ✌':(g==='Thumb_Up'?'点赞 👍':'手掌 🖐')));
+  gnow.textContent = !hasHand?'—':(fistStable?'握拳 ✊':(g==='Victory'?'胜利 ✌':(g==='Thumb_Up'?'点赞 👍':(g==='Pointing_Up'?'特调 ☝️':'手掌 🖐'))));
 
   // 仪式阶段：开启摄像头后可完全免触控
   if(!ritualReady){
@@ -1409,9 +1410,20 @@ function handleRes(res){
       if(resultGestureHold>=12){
         resultGestureHold=0; cooldown=24; document.getElementById('restartFlow').click();
       }
+    }else if(g==='Pointing_Up' && initialReadingText && !cocktailData){
+      resultGestureHold++;
+      gestureHud.textContent=`☝️ 保持单指向上生成牌意特调 · ${Math.min(100,Math.round(resultGestureHold/10*100))}%`;
+      if(resultGestureHold>=10 && !cocktailBtn.disabled){
+        resultGestureHold=0; cooldown=24; requestCocktail();
+      }
+    }else if(g==='Open_Palm' && initialReadingText){
+      resultGestureHold=0;
+      const dy=smHandY-.5;
+      if(Math.abs(dy)>.1) window.scrollBy({top:(dy-Math.sign(dy)*.1)*42,behavior:'auto'});
+      gestureHud.textContent=Math.abs(dy)<=.1?'🖐 手掌居中暂停滚动':'🖐 上下移动手掌滚动解读';
     }else{
       resultGestureHold=0;
-      gestureHud.textContent=initialReadingText?'追问请点击按钮提交 · ✌ 胜利：重新抽卡':'👍 点赞：AI 深度解读 · ✌ 胜利：重新抽卡';
+      gestureHud.textContent=initialReadingText?'🖐 上下滚动 · ☝️ 生成特调 · ✌ 重新抽卡':'👍 点赞：AI 深度解读 · ✌ 胜利：重新抽卡';
     }
     openHold=0;
     return;
