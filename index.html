@@ -426,6 +426,40 @@
   body[data-theme="sakura"] .followup-item{background:rgba(255,255,255,.68);border-color:rgba(232,92,151,.18)}
   body[data-theme="sakura"] .followup-item strong{color:#d24d8d}
   body[data-theme="sakura"] .followup-controls textarea{background:rgba(255,255,255,.74);border-color:rgba(232,92,151,.24)}
+  /* ===== 牌意特调 ===== */
+  .cocktail-action{display:none;justify-content:center;margin:14px auto 0}
+  .cocktail-action.show{display:flex}
+  .cocktail-card{display:none;width:min(94vw,720px);margin:14px auto 0;padding:22px;border-radius:22px;
+    background:radial-gradient(circle at 18% 12%,rgba(255,255,255,.08),transparent 34%),linear-gradient(145deg,rgba(26,21,42,.96),rgba(10,9,20,.96));
+    border:1px solid rgba(224,183,58,.24);box-shadow:0 20px 50px rgba(0,0,0,.42);overflow:hidden;position:relative}
+  .cocktail-card.show{display:grid;grid-template-columns:210px 1fr;gap:24px;align-items:center;animation:fadeup .65s both}
+  .cocktail-card::after{content:"✦";position:absolute;right:18px;top:13px;color:var(--gold);opacity:.35}
+  .drink-visual{height:270px;display:grid;place-items:center;position:relative}
+  .drink-aura{position:absolute;width:190px;height:190px;border-radius:50%;background:var(--drink-primary,#e96aa8);filter:blur(46px);opacity:.22}
+  .glass{position:relative;width:124px;height:190px;filter:drop-shadow(0 18px 18px rgba(0,0,0,.25))}
+  .glass-bowl{position:absolute;left:12px;right:12px;top:8px;height:138px;border:3px solid rgba(255,255,255,.62);border-top-color:rgba(255,255,255,.86);
+    border-radius:12px 12px 42px 42px;overflow:hidden;background:rgba(255,255,255,.05);box-shadow:inset 8px 0 12px rgba(255,255,255,.11)}
+  .drink-liquid{position:absolute;left:0;right:0;bottom:0;height:77%;background:linear-gradient(160deg,var(--drink-secondary,#ffc6df),var(--drink-primary,#e96aa8));
+    box-shadow:inset 0 10px 18px rgba(255,255,255,.22);animation:drinkShimmer 4s ease-in-out infinite}
+  .drink-liquid::before,.drink-liquid::after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.48);animation:bubbleUp 3.8s infinite}
+  .drink-liquid::before{width:7px;height:7px;left:27%;bottom:8px}.drink-liquid::after{width:4px;height:4px;right:30%;bottom:18px;animation-delay:1.4s}
+  .ice{position:absolute;width:29px;height:25px;border:1px solid rgba(255,255,255,.55);background:rgba(255,255,255,.14);border-radius:6px;transform:rotate(14deg);left:25px;bottom:42px}
+  .ice.two{left:auto;right:23px;bottom:72px;transform:rotate(-19deg)}
+  .glass-stem{position:absolute;width:4px;height:45px;left:60px;top:143px;background:rgba(255,255,255,.62)}
+  .glass-base{position:absolute;width:76px;height:4px;left:24px;bottom:0;border-radius:50%;background:rgba(255,255,255,.65)}
+  .glass.highball .glass-bowl{top:0;height:178px;border-radius:9px 9px 24px 24px}.glass.highball .glass-stem,.glass.highball .glass-base{display:none}
+  .glass.coupe .glass-bowl{left:2px;right:2px;top:18px;height:78px;border-radius:8px 8px 58px 58px}.glass.coupe .glass-stem{top:96px;height:84px}.glass.coupe .glass-base{bottom:6px}
+  .garnish{position:absolute;right:30px;top:38px;font-size:27px;transform:rotate(12deg);filter:drop-shadow(0 3px 4px rgba(0,0,0,.2))}
+  .drink-copy{position:relative;z-index:1}.drink-kicker{font-size:10px;letter-spacing:4px;color:var(--gold);margin-bottom:8px}
+  .drink-name{font-size:28px;letter-spacing:2px;color:var(--ink);margin:0 0 5px}.drink-subtitle{color:var(--ink-dim);font-size:12px;margin-bottom:15px}
+  .drink-chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:15px}.drink-chip{padding:5px 10px;border:1px solid var(--line);border-radius:30px;font-size:10px;color:var(--gold)}
+  .recipe-tabs{display:flex;gap:7px;margin-bottom:9px}.recipe-tab{border:0;border-bottom:1px solid transparent;padding:5px 0;margin-right:15px;background:none;color:var(--ink-dim);font:11px inherit;cursor:pointer}
+  .recipe-tab.active{color:var(--gold);border-color:var(--gold)}.recipe-text{min-height:54px;color:var(--ink);font-size:12px;line-height:1.8}
+  .drink-message{margin-top:13px;padding-top:12px;border-top:1px solid var(--line);color:var(--ink-dim);font-size:12px;line-height:1.8}
+  .drink-note{font-size:9px;color:var(--ink-dim);opacity:.72;margin-top:8px}
+  body[data-theme="sakura"] .cocktail-card{background:radial-gradient(circle at 18% 12%,rgba(255,255,255,.8),transparent 32%),linear-gradient(145deg,rgba(255,247,251,.96),rgba(255,225,240,.94));border-color:rgba(232,92,151,.22);box-shadow:0 18px 44px rgba(214,90,150,.2)}
+  @keyframes bubbleUp{0%{transform:translateY(12px);opacity:0}35%{opacity:.7}100%{transform:translateY(-82px);opacity:0}}
+  @keyframes drinkShimmer{0%,100%{filter:saturate(.95) brightness(1)}50%{filter:saturate(1.15) brightness(1.08)}}
 
   @media(max-width:480px){
     .theme-toggle{top:10px;left:10px;padding:7px 12px;font-size:10px}
@@ -437,6 +471,7 @@
     .sp{padding:6px 8px} .sp-name{font-size:12px}
     .ritual-flow{width:94vw;margin:14px auto 6px;padding:15px 13px}.spread-choices{grid-template-columns:1fr}.spread-choice{text-align:center}
     .reading .ic{width:74px}
+    .cocktail-card.show{grid-template-columns:1fr;padding:18px;gap:4px}.drink-visual{height:215px}.drink-name{text-align:center;font-size:24px}.drink-kicker,.drink-subtitle{text-align:center}.drink-chips{justify-content:center}
   }
 </style>
 </head>
@@ -519,6 +554,28 @@
     <div class="ai-title">✦ AI 心灵解读</div>
     <div class="ai-body" id="aiReadingBody"></div>
     <div class="ai-note">AI 解读仅供娱乐与自我反思，不替代医疗、法律、心理或投资等专业建议。</div>
+  </section>
+  <div class="cocktail-action" id="cocktailAction">
+    <button class="pill ghost" id="cocktailBtn">✦ 将牌意调成一杯特饮</button>
+  </div>
+  <section class="cocktail-card" id="cocktailCard" aria-live="polite">
+    <div class="drink-visual">
+      <div class="drink-aura"></div>
+      <div class="glass goblet" id="drinkGlass">
+        <div class="glass-bowl"><div class="drink-liquid"><i class="ice"></i><i class="ice two"></i></div></div>
+        <div class="glass-stem"></div><div class="glass-base"></div><div class="garnish" id="drinkGarnish">❀</div>
+      </div>
+    </div>
+    <div class="drink-copy">
+      <div class="drink-kicker">TAROT SIGNATURE DRINK</div>
+      <h3 class="drink-name" id="drinkName">正在调制本轮牌意</h3>
+      <div class="drink-subtitle" id="drinkSubtitle">色彩与风味正在杯中相遇</div>
+      <div class="drink-chips"><span class="drink-chip" id="drinkFlavor">风味生成中</span><span class="drink-chip" id="drinkDecor">装饰生成中</span></div>
+      <div class="recipe-tabs"><button class="recipe-tab active" data-recipe="zero">无酒精版</button><button class="recipe-tab" data-recipe="alcohol">酒精版</button></div>
+      <div class="recipe-text" id="recipeText"></div>
+      <div class="drink-message" id="drinkMessage"></div>
+      <div class="drink-note">特饮仅为创意灵感。未成年人、孕期、驾驶前及不适合饮酒者请选择无酒精版。</div>
+    </div>
   </section>
   <section class="followup-box" id="followupBox">
     <div class="followup-head"><span>✦ 继续追问</span><span id="followupCount">0 / 3</span></div>
@@ -633,7 +690,19 @@ const followupInput=document.getElementById('followupInput');
 const followupSend=document.getElementById('followupSend');
 const followupCount=document.getElementById('followupCount');
 const followupHint=document.getElementById('followupHint');
+const cocktailAction=document.getElementById('cocktailAction');
+const cocktailBtn=document.getElementById('cocktailBtn');
+const cocktailCard=document.getElementById('cocktailCard');
+const drinkGlass=document.getElementById('drinkGlass');
+const drinkName=document.getElementById('drinkName');
+const drinkSubtitle=document.getElementById('drinkSubtitle');
+const drinkFlavor=document.getElementById('drinkFlavor');
+const drinkDecor=document.getElementById('drinkDecor');
+const drinkGarnish=document.getElementById('drinkGarnish');
+const recipeText=document.getElementById('recipeText');
+const drinkMessage=document.getElementById('drinkMessage');
 let initialReadingText='', followUps=[];
+let cocktailData=null;
 
 const N=28, STEP=360/N;          // 宽幅牌流：更多卡背延伸到屏幕两侧
 let R=420, spin=0, vel=0;
@@ -845,6 +914,7 @@ function resetRound(){
   hideReading(); revealEl.innerHTML=''; scene.classList.remove('dim');
   aiAction.classList.remove('show'); aiReading.classList.remove('show','loading'); aiReadingBody.textContent='';
   initialReadingText=''; followUps=[]; followupBox.classList.remove('show'); followupThread.innerHTML='';
+  cocktailData=null; cocktailAction.classList.remove('show'); cocktailCard.classList.remove('show'); cocktailBtn.disabled=false;
   followupInput.value=''; followupInput.disabled=false; followupSend.disabled=false; followupCount.textContent='0 / 3';
   followupHint.textContent='输入后点击按钮提交';
   const box=document.getElementById('slots'); box.classList.remove('show'); box.innerHTML='';
@@ -996,7 +1066,7 @@ async function requestAIReading(){
     if(!response.ok) throw new Error(result.error||'AI 服务暂时不可用');
     aiReadingBody.textContent=result.reading||'牌面保持了沉默，请稍后重试。';
     initialReadingText=result.reading||'';
-    if(initialReadingText) followupBox.classList.add('show');
+    if(initialReadingText){ followupBox.classList.add('show'); cocktailAction.classList.add('show'); }
     aiReading.classList.remove('loading');
     requestAnimationFrame(()=>aiReading.scrollIntoView({behavior:'smooth',block:'start'}));
   }catch(error){
@@ -1007,6 +1077,56 @@ async function requestAIReading(){
     aiReadingBtn.disabled=false;
   }
 }
+
+function showRecipe(kind){
+  if(!cocktailData)return;
+  document.querySelectorAll('.recipe-tab').forEach(btn=>btn.classList.toggle('active',btn.dataset.recipe===kind));
+  recipeText.textContent=kind==='alcohol'?cocktailData.alcoholic:cocktailData.zeroProof;
+}
+function garnishSymbol(text){
+  if(/樱|花/.test(text))return '❀';
+  if(/柠|橙|柚|果/.test(text))return '◉';
+  if(/薄荷|叶|迷迭香/.test(text))return '❧';
+  return '✦';
+}
+async function requestCocktail(){
+  if(!initialReadingText || cocktailBtn.disabled)return;
+  cocktailBtn.disabled=true;
+  cocktailCard.classList.add('show');
+  drinkName.textContent='正在调制本轮牌意';
+  drinkSubtitle.textContent='色彩与风味正在杯中相遇';
+  recipeText.textContent='DeepSeek 正在从牌面里寻找这一杯的味道…';
+  drinkMessage.textContent='';
+  cocktailCard.scrollIntoView({behavior:'smooth',block:'start'});
+  try{
+    const response=await fetch(document.body.dataset.aiEndpoint||'/api/reading',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({mode:'cocktail',question:questionInput.value.trim(),spread:SPREADS[spreadK].name,
+        theme:document.body.dataset.theme==='sakura'?'sakura':'nocturne',
+        cards:cardPayload(),initialReading:initialReadingText})
+    });
+    let result={}; try{result=await response.json();}catch(e){}
+    if(!response.ok || !result.cocktail)throw new Error(result.error||'特饮暂时没有调制成功');
+    cocktailData=result.cocktail;
+    cocktailCard.style.setProperty('--drink-primary',cocktailData.primaryColor);
+    cocktailCard.style.setProperty('--drink-secondary',cocktailData.secondaryColor);
+    drinkGlass.className=`glass ${cocktailData.glass}`;
+    drinkName.textContent=cocktailData.name;
+    drinkSubtitle.textContent=cocktailData.subtitle;
+    drinkFlavor.textContent=`风味 · ${cocktailData.flavor}`;
+    drinkDecor.textContent=`杯饰 · ${cocktailData.garnish}`;
+    drinkGarnish.textContent=garnishSymbol(cocktailData.garnish);
+    drinkMessage.textContent=cocktailData.message;
+    showRecipe('zero');
+  }catch(error){
+    drinkName.textContent='这一杯暂时没有成形';
+    drinkSubtitle.textContent=error.message;
+    recipeText.textContent='可以稍后再试，牌面仍会留在这里。';
+    cocktailBtn.disabled=false;
+  }
+}
+cocktailBtn.addEventListener('click',requestCocktail);
+document.querySelectorAll('.recipe-tab').forEach(btn=>btn.addEventListener('click',()=>showRecipe(btn.dataset.recipe)));
 
 function cardPayload(){
   return collected.map((card,index)=>({

@@ -26,6 +26,7 @@ export async function onRequestPost({ request, env }) {
     const spread = safeText(body?.spread, 40);
     const theme = body?.theme === "nocturne" ? "nocturne" : "sakura";
     const isFollowUp = body?.mode === "followup";
+    const isCocktail = body?.mode === "cocktail";
     const cards = Array.isArray(body?.cards) ? body.cards.slice(0, 10) : [];
     if (!spread || cards.length < 1) {
       return json({ error: "缺少有效的牌阵或牌面数据" }, 400);
@@ -55,6 +56,9 @@ export async function onRequestPost({ request, env }) {
     if (isFollowUp && (!initialReading || !followUp)) {
       return json({ error: "缺少初始解读或追问内容" }, 400);
     }
+    if (isCocktail && !initialReading) {
+      return json({ error: "请先完成 AI 深度解读" }, 400);
+    }
 
     const styleGuide = theme === "sakura"
       ? "当前是小樱风：语气温柔、灵动、明亮，可以偶尔使用樱花或微光意象，但实用信息必须占至少八成；不要幼稚、甜腻或模仿任何现有动漫角色。"
@@ -68,7 +72,16 @@ export async function onRequestPost({ request, env }) {
     ];
     const surpriseType = surpriseTypes[Math.floor(Math.random() * surpriseTypes.length)];
 
-    const systemPrompt = isFollowUp ? `你是“Tarot · Sakura”的塔罗解读者，正在延续同一轮占卜。
+    const cocktailPrompt = `你是“Tarot · Sakura”的情绪特饮设计师。请把本轮塔罗牌意转化成一杯精致、真实可调制的主题特饮。
+特饮是创意彩蛋，不是治疗方式，不宣称饮用后能够改变命运、治愈悲伤或影响他人。
+必须同时提供无酒精版。酒精版应温和，并提醒未成年人、孕期、驾驶前及不适合饮酒者选择无酒精版。
+结合牌阵气质选择杯型、两种协调的液体颜色、风味与装饰。颜色必须输出合法的六位十六进制色值。
+文案温柔但不要甜腻，不使用破折号字符，不输出 Markdown。
+只返回一个合法 JSON 对象，不要代码围栏，不要任何额外说明，严格使用以下字段：
+{"name":"6至12字中文特饮名","subtitle":"一句不超过22字的风味印象","primaryColor":"#RRGGBB","secondaryColor":"#RRGGBB","glass":"coupe或highball或goblet三选一","garnish":"不超过12字的装饰","flavor":"酸甜苦香等不超过18字","alcoholic":"酒精版配方，2至4种常见材料，包含用量","zeroProof":"无酒精版配方，2至4种常见材料，包含用量","message":"一句以允许自己或提醒自己为核心的温柔文案，不超过55字"}
+配方必须安全、常见、可执行，不使用药物、危险材料或宣称保健功效。`;
+
+    const systemPrompt = isCocktail ? cocktailPrompt : isFollowUp ? `你是“Tarot · Sakura”的塔罗解读者，正在延续同一轮占卜。
 ${styleGuide}
 只回答用户当前追问，并结合原始问题、牌阵位置、正逆位、初始解读和此前追问。
 第一段必须直接回答问题，不要用比喻绕开。若问题询问“他是否爱我”“对方怎么想”等他人内心，不要以“无法确认”“无法知道”开场，也不要拒绝判断。先根据牌面给出清晰的倾向性答案，例如“仍有感情但更偏犹豫和防御”“吸引力存在，但投入程度不足”“目前更偏疏离和冷却”。
@@ -124,7 +137,13 @@ ${surpriseType}。彩蛋控制在一到两句。
           { role: "system", content: systemPrompt },
           {
             role: "user",
-            content: JSON.stringify(isFollowUp ? {
+            content: JSON.stringify(isCocktail ? {
+              question: question || "开放式自我探索",
+              spread,
+              theme,
+              cards: normalizedCards,
+              initialReading
+            } : isFollowUp ? {
               originalQuestion: question || "开放式自我探索",
               spread,
               theme,
@@ -141,7 +160,7 @@ ${surpriseType}。彩蛋控制在一到两句。
           }
         ],
         thinking: { type: "disabled" },
-        max_tokens: isFollowUp ? 850 : 1500,
+        max_tokens: isCocktail ? 650 : isFollowUp ? 850 : 1500,
         stream: false
       })
     });
@@ -161,6 +180,27 @@ ${surpriseType}。彩蛋控制在一到两句。
     const rawReading = data?.choices?.[0]?.message?.content?.trim();
     if (!rawReading) {
       return json({ error: "AI 没有返回有效解读" }, 502);
+    }
+    if (isCocktail) {
+      try {
+        const clean = rawReading.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "");
+        const cocktail = JSON.parse(clean);
+        const color = value => /^#[0-9a-f]{6}$/i.test(value || "") ? value : "#e96aa8";
+        return json({ cocktail: {
+          name: safeText(cocktail.name, 30) || "樱光回甘",
+          subtitle: safeText(cocktail.subtitle, 60),
+          primaryColor: color(cocktail.primaryColor),
+          secondaryColor: color(cocktail.secondaryColor),
+          glass: ["coupe", "highball", "goblet"].includes(cocktail.glass) ? cocktail.glass : "goblet",
+          garnish: safeText(cocktail.garnish, 30),
+          flavor: safeText(cocktail.flavor, 40),
+          alcoholic: safeText(cocktail.alcoholic, 180),
+          zeroProof: safeText(cocktail.zeroProof, 180),
+          message: safeText(cocktail.message, 140)
+        }});
+      } catch (error) {
+        return json({ error: "特饮灵感暂时没有成形，请再试一次" }, 502);
+      }
     }
     const reading = rawReading
       .replace(/[—–]+/g, "，")
