@@ -56,7 +56,8 @@
 
   /* ===== 横向 3D 转盘 ===== */
   .stage{position:relative;width:100%;max-width:860px;height:min(58vh,440px);margin:14px auto 0}
-  .scene{position:absolute;inset:0;perspective:2100px;perspective-origin:50% 46%;transition:opacity .6s,filter .6s}
+  .scene{position:absolute;inset:0;perspective:2100px;perspective-origin:50% 46%;transition:opacity .6s,filter .6s;
+    touch-action:none;user-select:none;-webkit-user-select:none}
   .scene.dim{opacity:.12;filter:blur(3px)}
   .glow-core{position:absolute;left:50%;top:46%;width:240px;height:240px;transform:translate(-50%,-50%);
     border-radius:50%;pointer-events:none;
@@ -672,7 +673,6 @@ function buildCarousel(){
     el.className='cback';
     el.innerHTML=`<span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span><span class="sk sk-frame"></span><span class="sk sk-star sk-t">✦</span><span class="sk sk-star sk-b">✦</span><span class="sk sk-name">SAKURA</span><span class="sig">${SIGILS[i%SIGILS.length]}</span>`;
     el.style.transform=`rotateY(${i*STEP}deg) translateZ(${R}px)`;
-    el.addEventListener('click',()=>{if(!busy)doDraw();});
     carousel.appendChild(el);
     backs.push(el);
   }
@@ -706,6 +706,48 @@ function tick(){
   depth();
   requestAnimationFrame(tick);
 }
+
+/* 鼠标／触控自主选牌：轻划产生惯性，自动减速吸附；轻点抓取 */
+let pointerDrag=false, pointerMoved=false, pointerStartX=0, pointerLastX=0;
+let pointerLastTime=0, pointerSpeed=0;
+scene.addEventListener('pointerdown',e=>{
+  if(!ritualReady || busy || revealed || !e.target.closest('.cback'))return;
+  e.preventDefault();
+  pointerDrag=true; pointerMoved=false; pointerStartX=e.clientX; pointerLastX=e.clientX;
+  pointerLastTime=performance.now(); pointerSpeed=0;
+  manualMode=true; manualVel=0; onLanded=null; phase='manual';
+  scene.setPointerCapture?.(e.pointerId);
+  stageHint.textContent='左右轻划牌流 · 松手后自动滑行 · 轻点选中';
+});
+scene.addEventListener('pointermove',e=>{
+  if(!pointerDrag)return;
+  e.preventDefault();
+  const dx=e.clientX-pointerLastX;
+  const now=performance.now(), dt=Math.max(8,now-pointerLastTime);
+  pointerLastX=e.clientX;
+  pointerLastTime=now;
+  if(Math.abs(e.clientX-pointerStartX)>6)pointerMoved=true;
+  pointerSpeed=pointerSpeed*.58+(dx/dt)*.42;
+  spin+=dx*0.16;
+});
+function finishPointerDrag(e,cancelled=false){
+  if(!pointerDrag)return;
+  pointerDrag=false;
+  scene.releasePointerCapture?.(e.pointerId);
+  if(!pointerMoved && !cancelled){
+    phase='idle'; manualMode=false; selectFront();
+    return;
+  }
+  vel=Math.max(-18,Math.min(18,pointerSpeed*11));
+  if(Math.abs(vel)<1.2)vel=Math.sign(e.clientX-pointerStartX||1)*3.2;
+  phase='spin';
+  onLanded=()=>{
+    phase='idle'; manualMode=false;
+    stageHint.textContent='轻点当前牌选中 · 或再轻划一次';
+  };
+}
+scene.addEventListener('pointerup',e=>finishPointerDrag(e));
+scene.addEventListener('pointercancel',e=>finishPointerDrag(e,true));
 
 function pickCards(n){
   const pool=[...TAROT_DECK], out=[];
@@ -919,6 +961,7 @@ holdShuffle.addEventListener('pointerdown',e=>{
 ['pointerup','pointercancel','pointerleave'].forEach(type=>holdShuffle.addEventListener(type,cancelHold));
 function restartEntireFlow(){
   resetRound(); ritualReady=false; ritualFlow.classList.remove('done'); stage.classList.add('flow-locked');
+  gestureTransitionLockUntil=0; awaitingFistRelease=false;
   mainActions.classList.remove('ready'); questionInput.value=''; openExploration.checked=false;
   document.querySelectorAll('.spread-choice').forEach(x=>x.classList.remove('selected'));
   updateQuestionReady(); showRitualStep(1); ritualFlow.scrollIntoView({behavior:'smooth',block:'start'});
@@ -1055,6 +1098,7 @@ let recognizer=null, running=false, lastVideoTime=-1, lastTs=0, frameErr=0;
 let fistCount=0; const FIST_NEED=9;          // 约0.45s, 更跟手
 let missTol=0;                                // 握拳闪断容错
 let cooldown=0;
+let gestureTransitionLockUntil=0, awaitingFistRelease=false;
 let gHist=[];                                 // 多帧投票
 const MIN_SCORE=0.45;
 const GES_CN={Open_Palm:'张掌 🖐',Closed_Fist:'握拳 ✊',Victory:'胜利 ✌',Pointing_Up:'指上 ☝',Thumb_Up:'赞 👍',Thumb_Down:'踩 👎',ILoveYou:'🤟',None:'—'};
@@ -1167,7 +1211,7 @@ function handleRes(res){
   if(res.gestures&&res.gestures.length&&res.gestures[0].length){
     const top=res.gestures[0][0]; score=top.score; if(score>=MIN_SCORE) raw=top.categoryName;
   }
-  const g=vote(raw);                          // 分类器投票(仅用于✌切牌阵)
+  const g=vote(raw);                          // 分类器投票与手势消抖
 
   // 手位 + 几何握拳(布尔4帧消抖)
   const hasHand = res.landmarks && res.landmarks.length>0;
@@ -1196,6 +1240,8 @@ function handleRes(res){
         gestureHud.textContent=`🖐 左右移动切换 · 当前 ${['圣示牌 · 1张','时间之流 · 3张','十字牌阵 · 5张'][ritualSpreadHover]} · ✊ 握拳确认`;
         ritualGestureHold=fistStable?ritualGestureHold+1:0;
         if(ritualGestureHold>=FIST_NEED){
+          gestureTransitionLockUntil=performance.now()+1400;
+          awaitingFistRelease=true;
           choices[ritualSpreadHover].click(); ritualGestureHold=0; cooldown=18;
         }
       }else ritualGestureHold=0;
@@ -1208,6 +1254,18 @@ function handleRes(res){
         finishRitual(); ritualGestureHold=0; cooldown=20;
       }
       if(!fistStable)holdFill.style.width='0%';
+    }
+    return;
+  }
+
+  // 第二步确认后必须经过短暂停顿并松开拳头，避免同一握拳误抓第一张牌
+  if(awaitingFistRelease){
+    const waitLeft=Math.max(0,gestureTransitionLockUntil-performance.now());
+    if(waitLeft<=0 && !fistStable){
+      awaitingFistRelease=false; fistLatch=false; fistCount=0; cooldown=10;
+      gestureHud.textContent='🖐 已准备好 · 移动选牌，重新握拳抓取';
+    }else{
+      gestureHud.textContent=waitLeft>0?'牌阵展开中 · 请稍候':'请先松开拳头，再重新握拳选牌';
     }
     return;
   }
